@@ -288,6 +288,56 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* New AI grading feedback styles */
+        .method-badge {
+            margin-left: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .method-badge.ai {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .method-badge.fallback {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .ai-feedback {
+            margin-top: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: 8px;
+            border-left: 4px solid #0ea5e9;
+        }
+        
+        .feedback-strengths {
+            margin-top: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border-radius: 8px;
+            border-left: 4px solid #22c55e;
+        }
+        
+        .feedback-improvements {
+            margin-top: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .grading-info {
+            margin-top: 10px;
+            text-align: right;
+            opacity: 0.7;
+        }
 
         .progress-bar {
             width: 100%;
@@ -1618,57 +1668,148 @@
             };
         }
 
-        // OpenAI API 사용을 위한 프록시 함수 (선택사항)
+        // 새로운 AI 채점 시스템을 사용하는 함수
         async function gradeEssayWithAPI(question, userAnswer) {
             try {
-                // CORS 우회를 위한 프록시 서비스 사용 예시
-                // 실제 사용시에는 자체 프록시 서버 구축 권장
-                const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-                const targetUrl = 'https://api.openai.com/v1/chat/completions';
+                console.log('🤖 Using new AI grading system...');
                 
-                const response = await fetch(proxyUrl + targetUrl, {
+                if (!authToken) {
+                    console.error('No auth token available');
+                    return gradeEssayFallback(question, userAnswer);
+                }
+                
+                const response = await fetch('/api/grade-essay', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + apiKey,
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'Authorization': `Bearer ${authToken}`
                     },
                     body: JSON.stringify({
-                        model: 'gpt-3.5-turbo',
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'You are an exam grader. Evaluate the student answer and respond with JSON: {"score": number, "feedback": "string", "isCorrect": boolean}'
-                            },
-                            {
-                                role: 'user',
-                                content: `Question: ${question.question}\nCorrect Answer Reference: ${question.explanation}\nStudent Answer: ${userAnswer}\nMax Score: ${question.score}`
-                            }
-                        ],
-                        temperature: 0.3
+                        question: question,
+                        userAnswer: userAnswer,
+                        maxScore: question.score
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error('API request failed');
+                    const errorText = await response.text();
+                    console.error(`AI grading API failed: ${response.status}`, errorText);
+                    throw new Error(`API request failed: ${response.status}`);
                 }
 
-                const data = await response.json();
-                const aiResponse = JSON.parse(data.choices[0].message.content);
+                const result = await response.json();
+                console.log('✅ AI grading successful:', result.method);
                 
                 return {
-                    isCorrect: aiResponse.score === question.score,
-                    score: aiResponse.score,
+                    isCorrect: result.isCorrect,
+                    score: result.score,
                     maxScore: question.score,
-                    userAnswer,
+                    userAnswer: userAnswer,
                     explanation: question.explanation,
-                    feedback: aiResponse.feedback
+                    feedback: result.feedback,
+                    strengths: result.strengths,
+                    improvements: result.improvements,
+                    method: result.method,
+                    timestamp: result.timestamp
                 };
+                
             } catch (error) {
-                console.error('AI grading error:', error);
-                // API 실패시 간단 채점으로 fallback
-                return gradeEssaySimple(question, userAnswer);
+                console.error('AI grading failed, using fallback:', error.message);
+                // 실패시 개선된 fallback 채점으로 대체
+                return gradeEssayFallback(question, userAnswer);
             }
+        }
+        
+        // 개선된 fallback 채점 시스템
+        function gradeEssayFallback(question, userAnswer) {
+            console.log('📝 Using improved fallback grading...');
+            
+            const answerLower = userAnswer.toLowerCase();
+            let score = 0;
+            let feedback = "";
+            let strengths = "";
+            let improvements = "";
+            
+            // 답안이 너무 짧은 경우
+            if (userAnswer.trim().length < 5) {
+                return {
+                    isCorrect: false,
+                    score: 0,
+                    maxScore: question.score,
+                    userAnswer: userAnswer,
+                    explanation: question.explanation,
+                    feedback: "답안이 너무 짧습니다. 문제에서 요구하는 내용을 자세히 작성해주세요.",
+                    strengths: "문제에 응답하려는 의지를 보였습니다.",
+                    improvements: "더 자세한 설명과 계산 과정을 포함해주세요.",
+                    method: 'fallback'
+                };
+            }
+            
+            // 기본 노력 점수
+            let baseScore = Math.floor(question.score * 0.4); // 40%
+            
+            // 수학적 표현 탐지
+            const hasFormula = /(\d+\s*[\+\-\*\/\^²]\s*\d+)|([a-z]²?\s*[\+\-\*\/]\s*[a-z]²?)|(=\s*\d+)/.test(answerLower);
+            const hasCalculation = /\d+/.test(userAnswer);
+            
+            // 피타고라스 정리 문제 특별 처리
+            if (question.question.includes("피타고라스") || question.question.includes("pythagorean")) {
+                // 정확한 계산 확인 (5² - 3² = 16, 답 = 4)
+                const hasCorrectCalculation = 
+                    (answerLower.includes("25") && answerLower.includes("9") && answerLower.includes("16")) ||
+                    (answerLower.includes("5²") && answerLower.includes("3²")) ||
+                    (answerLower.includes("5^2") && answerLower.includes("3^2")) ||
+                    (answerLower.includes("4²") || answerLower.includes("= 4") || answerLower.includes("답은 4") || answerLower.includes("정답은 4"));
+                
+                if (hasCorrectCalculation) {
+                    score = Math.floor(question.score * 0.85); // 85% 정확한 계산
+                    feedback = "수학적 계산이 정확합니다! ";
+                    strengths = "피타고라스 정리를 올바르게 적용하여 정확한 답을 도출했습니다.";
+                    improvements = "피타고라스 정리의 개념 설명을 추가하면 더 완벽한 답안이 됩니다.";
+                } else if (hasFormula && hasCalculation) {
+                    score = Math.floor(question.score * 0.6); // 60%
+                    feedback = "수학적 접근을 시도했습니다. ";
+                    strengths = "공식을 사용하려고 노력했습니다.";
+                    improvements = "계산 과정을 더 정확하게 확인해보세요.";
+                } else if (hasCalculation) {
+                    score = Math.floor(question.score * 0.5); // 50%
+                    feedback = "계산을 시도했습니다. ";
+                    strengths = "수치적 접근을 시도했습니다.";
+                    improvements = "피타고라스 정리 공식(a²+b²=c²)을 활용해보세요.";
+                } else {
+                    score = baseScore;
+                    feedback = "답안을 작성했으나 계산이 부족합니다. ";
+                    strengths = "문제에 응답하려고 노력했습니다.";
+                    improvements = "수치 계산과 공식 적용을 포함해주세요.";
+                }
+            } else {
+                // 일반 서술형 문제
+                if (userAnswer.length > 100) {
+                    score = Math.floor(question.score * 0.7);
+                    feedback = "자세한 답안을 작성했습니다. ";
+                } else if (userAnswer.length > 50) {
+                    score = Math.floor(question.score * 0.6);
+                    feedback = "적절한 길이의 답안을 작성했습니다. ";
+                } else {
+                    score = baseScore;
+                    feedback = "답안이 다소 짧습니다. ";
+                }
+                
+                strengths = "문제에 성실히 응답했습니다.";
+                improvements = "더 구체적인 설명과 예시를 포함하면 좋겠습니다.";
+            }
+            
+            return {
+                isCorrect: score >= question.score * 0.7,
+                score: Math.min(score, question.score),
+                maxScore: question.score,
+                userAnswer: userAnswer,
+                explanation: question.explanation,
+                feedback: feedback + "(개선된 기본 채점 시스템 사용)",
+                strengths: strengths,
+                improvements: improvements,
+                method: 'fallback'
+            };
         }
 
         function showResults(results) {
@@ -1775,15 +1916,45 @@
                 correctAnswerText = '주관식 문제';
             }
             
+            // 채점 방법 표시 (AI vs Fallback)
+            let gradingMethodBadge = '';
+            if (result.method === 'ai') {
+                gradingMethodBadge = '<span class="method-badge ai">🤖 AI 채점</span>';
+            } else if (result.method === 'fallback') {
+                gradingMethodBadge = '<span class="method-badge fallback">📝 기본 채점</span>';
+            }
+            
             reviewDiv.innerHTML = `
-                <div class="status-badge ${statusClass}">${statusText} (${result.score}/${result.maxScore}점)</div>
+                <div class="status-badge ${statusClass}">${statusText} (${result.score}/${result.maxScore}점) ${gradingMethodBadge}</div>
                 <h4>문제 ${questionNumber}: ${question.question}</h4>
                 <p><strong>내 답안:</strong> ${userAnswerText}</p>
                 ${question.type !== 'essay' ? `<p><strong>정답:</strong> ${correctAnswerText}</p>` : ''}
-                ${result.feedback ? `<p><strong>AI 피드백:</strong> ${result.feedback}</p>` : ''}
+                ${result.feedback ? `
+                    <div class="ai-feedback">
+                        <strong>📝 종합 피드백:</strong>
+                        <p>${result.feedback}</p>
+                    </div>
+                ` : ''}
+                ${result.strengths ? `
+                    <div class="feedback-strengths">
+                        <strong>✅ 잘한 점:</strong>
+                        <p>${result.strengths}</p>
+                    </div>
+                ` : ''}
+                ${result.improvements ? `
+                    <div class="feedback-improvements">
+                        <strong>💡 개선 사항:</strong>
+                        <p>${result.improvements}</p>
+                    </div>
+                ` : ''}
                 <div class="explanation">
-                    <strong>해설:</strong> ${result.explanation}
+                    <strong>📚 해설:</strong> ${result.explanation}
                 </div>
+                ${result.timestamp ? `
+                    <div class="grading-info">
+                        <small>채점 시간: ${new Date(result.timestamp).toLocaleString('ko-KR')}</small>
+                    </div>
+                ` : ''}
             `;
             
             return reviewDiv;
