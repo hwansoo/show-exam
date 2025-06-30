@@ -13,7 +13,7 @@
       "is_built_in": true
     },
     {
-      "key": "physics_basic", 
+      "key": "physics_basic",
       "file": "physics_basic.json",
       "title": "기초 물리학",
       "description": "물리학의 기본 개념과 공식들",
@@ -22,6 +22,17 @@
       "created_at": "2024-01-01T00:00:00Z",
       "updated_at": "2024-01-01T00:00:00Z",
       "is_built_in": true
+    },
+    {
+      "key": "test_api_1751289036092",
+      "file": "test_api_1751289036092.json",
+      "title": "Test Problem Set API",
+      "description": "A test problem set created via API",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-06-30T13:10:36.851Z",
+      "updated_at": "2025-06-30T13:10:36.851Z",
+      "is_built_in": false
     }
   ]
 }
