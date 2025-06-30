@@ -263,39 +263,98 @@ module.exports = async function handler(req, res) {
           // Get specific problem set
           console.log('Getting specific problem set:', key);
           
-          const indexPath = path.join(process.cwd(), 'data', 'index.json');
-          const index = readJsonFile(indexPath);
-          if (!index) {
-            return res.status(500).json({ error: 'Failed to read index' });
+          // Use GitHub as source of truth for consistency
+          if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
+            console.log('Reading from GitHub for consistency...');
+            
+            const indexData = await getFileFromGitHub('data/index.json');
+            if (!indexData) {
+              console.log('GitHub read failed, falling back to local files');
+              const indexPath = path.join(process.cwd(), 'data', 'index.json');
+              const index = readJsonFile(indexPath);
+              if (!index) {
+                return res.status(500).json({ error: 'Failed to read index' });
+              }
+              indexData = { content: index };
+            }
+            
+            const problemSet = indexData.content.problem_sets.find(ps => ps.key === key);
+            if (!problemSet) {
+              return res.status(404).json({ error: 'Problem set not found' });
+            }
+            
+            console.log('Reading problem set file from GitHub:', problemSet.file);
+            const problemSetData = await getFileFromGitHub(`data/${problemSet.file}`);
+            if (!problemSetData) {
+              console.log('GitHub file read failed, falling back to local');
+              const problemSetPath = path.join(process.cwd(), 'data', problemSet.file);
+              const content = readJsonFile(problemSetPath);
+              if (!content) {
+                return res.status(500).json({ error: 'Failed to read problem set' });
+              }
+              console.log('Successfully loaded problem set from local, questions:', content.questions?.length);
+              res.status(200).json(content);
+            } else {
+              console.log('Successfully loaded problem set from GitHub, questions:', problemSetData.content.questions?.length);
+              res.status(200).json(problemSetData.content);
+            }
+          } else {
+            // Fallback to local files if GitHub not configured
+            console.log('GitHub not configured, using local files');
+            const indexPath = path.join(process.cwd(), 'data', 'index.json');
+            const index = readJsonFile(indexPath);
+            if (!index) {
+              return res.status(500).json({ error: 'Failed to read index' });
+            }
+            
+            const problemSet = index.problem_sets.find(ps => ps.key === key);
+            if (!problemSet) {
+              return res.status(404).json({ error: 'Problem set not found' });
+            }
+            
+            const problemSetPath = path.join(process.cwd(), 'data', problemSet.file);
+            const content = readJsonFile(problemSetPath);
+            if (!content) {
+              return res.status(500).json({ error: 'Failed to read problem set' });
+            }
+            
+            console.log('Successfully loaded problem set from local, questions:', content.questions?.length);
+            res.status(200).json(content);
           }
-          
-          const problemSet = index.problem_sets.find(ps => ps.key === key);
-          if (!problemSet) {
-            return res.status(404).json({ error: 'Problem set not found' });
-          }
-          
-          const problemSetPath = path.join(process.cwd(), 'data', problemSet.file);
-          console.log('Reading problem set from:', problemSetPath);
-          
-          const content = readJsonFile(problemSetPath);
-          if (!content) {
-            return res.status(500).json({ error: 'Failed to read problem set' });
-          }
-          
-          console.log('Successfully loaded problem set, questions:', content.questions?.length);
-          res.status(200).json(content);
         } else {
           // Get all problem sets index
           console.log('Getting problem sets index');
           
-          const indexPath = path.join(process.cwd(), 'data', 'index.json');
-          const index = readJsonFile(indexPath);
-          if (!index) {
-            return res.status(500).json({ error: 'Failed to read index' });
+          // Use GitHub as source of truth for consistency
+          if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
+            console.log('Reading index from GitHub for consistency...');
+            
+            const indexData = await getFileFromGitHub('data/index.json');
+            if (!indexData) {
+              console.log('GitHub read failed, falling back to local files');
+              const indexPath = path.join(process.cwd(), 'data', 'index.json');
+              const index = readJsonFile(indexPath);
+              if (!index) {
+                return res.status(500).json({ error: 'Failed to read index' });
+              }
+              console.log('Successfully loaded index from local, problem sets count:', index.problem_sets?.length);
+              res.status(200).json(index);
+            } else {
+              console.log('Successfully loaded index from GitHub, problem sets count:', indexData.content.problem_sets?.length);
+              res.status(200).json(indexData.content);
+            }
+          } else {
+            // Fallback to local files if GitHub not configured
+            console.log('GitHub not configured, using local files');
+            const indexPath = path.join(process.cwd(), 'data', 'index.json');
+            const index = readJsonFile(indexPath);
+            if (!index) {
+              return res.status(500).json({ error: 'Failed to read index' });
+            }
+            
+            console.log('Successfully loaded index from local, problem sets count:', index.problem_sets?.length);
+            res.status(200).json(index);
           }
-          
-          console.log('Successfully loaded index, problem sets count:', index.problem_sets?.length);
-          res.status(200).json(index);
         }
         break;
 
