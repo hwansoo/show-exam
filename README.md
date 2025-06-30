@@ -94,57 +94,160 @@ vercel --prod
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
-## 📋 Problem Set Format
+## 📋 Problem Set Format & Generation Guide
 
-### Basic Structure
+### 📋 Basic Structure
+
 ```json
 {
-  "title": "Problem Set Title",
-  "description": "Brief description",
-  "questions": [...]
+  "title": "문제집 제목",
+  "description": "문제집 설명",
+  "questions": [
+    // 문제 목록
+  ]
 }
 ```
 
-### Question Types
+### 🔍 Supported Question Types
 
-#### Single Choice
+#### 1. Single Choice (객관식)
+- **Purpose**: Single correct answer selection
+- **Required fields**: id, type, question, options, correct_answer, score, explanation
+
 ```json
 {
   "id": 1,
   "type": "single_choice",
-  "question": "What is $\\sqrt{16}$?",
-  "options": ["2", "4", "8", "16"],
+  "question": "문제 내용 (LaTeX 수식 지원: $\\sqrt{16}$)",
+  "options": ["선택지1", "선택지2", "선택지3", "선택지4"],
   "correct_answer": 1,
   "score": 10,
-  "explanation": "The square root of 16 is 4."
+  "explanation": "해설 내용"
 }
 ```
 
-#### Multiple Choice
+#### 2. Multiple Choice (복수 선택)
+- **Purpose**: Multiple correct answers selection
+- **Required fields**: correct_answers (array)
+
 ```json
 {
   "id": 2,
-  "type": "multiple_choice", 
-  "question": "Select all prime numbers:",
-  "options": ["2", "3", "4", "5"],
-  "correct_answers": [0, 1, 3],
+  "type": "multiple_choice",
+  "question": "해당하는 것을 모두 고르세요.",
+  "options": ["옵션1", "옵션2", "옵션3", "옵션4", "옵션5", "옵션6"],
+  "correct_answers": [0, 1, 3, 5],
   "score": 15,
-  "explanation": "2, 3, and 5 are prime numbers."
+  "explanation": "해설 내용"
 }
 ```
 
-#### Essay Question
+#### 3. True/False (참/거짓)
+- **Purpose**: True/false judgment
+- **Required fields**: correct_answer (boolean)
+
 ```json
 {
   "id": 3,
-  "type": "essay",
-  "question": "Explain the Pythagorean theorem...",
-  "score": 20,
-  "explanation": "The theorem states that a²+b²=c²..."
+  "type": "true_false",
+  "question": "$\\pi$는 무리수이다.",
+  "correct_answer": true,
+  "score": 10,
+  "explanation": "해설 내용"
 }
 ```
 
-See the prompt generation guide for complete format documentation.
+#### 4. Short Answer (단답형)
+- **Purpose**: Brief answer input
+- **Required fields**: correct_answer (string)
+
+```json
+{
+  "id": 4,
+  "type": "short_answer",
+  "question": "$2x + 5 = 13$일 때, $x$의 값을 구하세요.",
+  "correct_answer": "4",
+  "score": 15,
+  "explanation": "해설 내용"
+}
+```
+
+#### 5. Essay (서술형)
+- **Purpose**: Long-form written responses (AI grading)
+- **Required fields**: score, explanation
+
+```json
+{
+  "id": 5,
+  "type": "essay",
+  "question": "피타고라스 정리를 설명하고 계산 과정을 서술하세요.",
+  "score": 20,
+  "explanation": "모범 답안 및 채점 기준"
+}
+```
+
+#### 6. Compound Questions (복합 문제)
+- **Purpose**: Multiple sub-questions within one main question
+- **Required fields**: sub_questions (array)
+
+```json
+{
+  "id": 6,
+  "type": "compound",
+  "question": "운동 법칙에 관한 문제",
+  "score": 30,
+  "sub_questions": [
+    {
+      "id": "6a",
+      "type": "true_false",
+      "question": "뉴턴의 제1법칙은 관성의 법칙이다.",
+      "correct_answer": true,
+      "score": 10,
+      "explanation": "해설"
+    },
+    {
+      "id": "6b",
+      "type": "short_answer",
+      "question": "F=ma에서 a를 구하세요.",
+      "correct_answer": "2",
+      "score": 10,
+      "explanation": "해설"
+    }
+  ]
+}
+```
+
+### 🎯 Problem Generation Guidelines
+
+#### Essential Requirements:
+1. **Unique ID**: Assign unique numeric ID for each question
+2. **Appropriate Score**: 5-25 points based on difficulty
+3. **Clear Explanation**: Include answer rationale and learning points
+4. **LaTeX Math**: Use `$...$` or `$$...$$` for mathematical expressions
+
+#### Recommendations:
+- Use mixed question types for variety
+- Structure difficulty progressively (easy → hard)
+- Include practical examples
+- Use clear, unambiguous wording
+
+### 📝 Example Generation Prompt
+
+```
+"다음 주제로 10문제짜리 문제집을 만들어주세요:
+- 주제: [고등학교 화학 - 산과 염기]
+- 구성: 객관식 4문제, 참/거짓 2문제, 단답형 2문제, 서술형 1문제, 복합문제 1문제
+- 난이도: 중급
+- 특이사항: pH 계산 문제 포함, 실생활 예시 활용"
+```
+
+### ⚠️ Important Notes
+
+1. **JSON Syntax**: Follow proper JSON formatting
+2. **Character Escaping**: Use `\"` for quotes, `\\` for backslashes
+3. **LaTeX Syntax**: Use correct LaTeX syntax for mathematical expressions
+4. **Array Indexing**: correct_answer and correct_answers start from 0
+5. **Question IDs**: Use format like "2a", "2b" for compound sub-questions
 
 ## 🔧 Configuration
 
