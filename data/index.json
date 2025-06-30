@@ -24,17 +24,6 @@
       "is_built_in": true
     },
     {
-      "key": "test_api_1751289043917",
-      "file": "test_api_1751289043917.json",
-      "title": "Test Problem Set API",
-      "description": "A test problem set created via API",
-      "category": "custom",
-      "difficulty": "unknown",
-      "created_at": "2025-06-30T13:10:44.780Z",
-      "updated_at": "2025-06-30T13:10:44.780Z",
-      "is_built_in": false
-    },
-    {
       "key": "delete_test_1751289420992",
       "file": "delete_test_1751289420992.json",
       "title": "Delete Test Problem Set",
