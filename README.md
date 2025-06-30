@@ -119,13 +119,14 @@ See the prompt generation guide for complete format documentation.
 ## 🔧 Configuration
 
 ### Environment Variables
+- `GLOBAL_PASSWORD`: Global access password to protect the entire service (default: exam2024)
 - `OPENAI_API_KEY`: For AI essay grading (optional)
 - `ADMIN_PASSWORD`: Admin panel access (default: admin123)
 
-### Admin Access
-1. Click the "🔧 관리자" button
-2. Enter admin password
-3. Manage problem sets through the interface
+### Access Control
+1. **Global Access**: Enter the global password to access the service
+2. **Admin Access**: Click the "🔧 관리자" button and enter admin password
+3. **Problem Management**: Create, edit, and delete custom problem sets
 
 ## 🌐 API Reference
 
@@ -154,10 +155,14 @@ See the prompt generation guide for complete format documentation.
 
 ## 🛡️ Security
 
-- **Admin Authentication**: Password-based access control
-- **Input Validation**: JSON schema validation
+- **Global Password Protection**: Entire service protected with password authentication
+- **Session Management**: 24-hour secure session tokens for authenticated users
+- **API Protection**: All endpoints require authentication after login
+- **Admin Authentication**: Separate password-based access control for admin functions
+- **Input Validation**: JSON schema validation for all data
 - **CORS Protection**: Configured for frontend access
 - **Built-in Safety**: Core problem sets protected from deletion
+- **API Key Protection**: Secure storage and transmission of OpenAI API keys
 
 ## 📊 Free Tier Deployment
 

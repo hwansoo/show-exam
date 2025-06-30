@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { verifyToken } from './auth.js';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const INDEX_FILE = path.join(DATA_DIR, 'index.json');
@@ -26,6 +27,23 @@ function writeJsonFile(filePath, data) {
   }
 }
 
+// Authentication middleware
+function requireAuth(req, res) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Authentication required' });
+    return false;
+  }
+  
+  const token = authHeader.substring(7);
+  if (!verifyToken(token)) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return false;
+  }
+  
+  return true;
+}
+
 // Main handler function
 export default function handler(req, res) {
   // Enable CORS
@@ -35,6 +53,11 @@ export default function handler(req, res) {
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
+    return;
+  }
+
+  // Check authentication for all requests
+  if (!requireAuth(req, res)) {
     return;
   }
 

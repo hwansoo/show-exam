@@ -350,6 +350,25 @@
             <p>다양한 유형의 문제를 풀고 실력을 향상시켜보세요!</p>
         </div>
 
+        <!-- 전역 비밀번호 보호 화면 -->
+        <div class="card" id="globalPasswordSection">
+            <div style="text-align: center; padding: 40px 20px;">
+                <h2>🔐 서비스 접속</h2>
+                <p style="margin: 20px 0; color: #718096;">이 서비스는 비밀번호로 보호되고 있습니다.</p>
+                <div style="max-width: 300px; margin: 0 auto;">
+                    <input type="password" id="globalPasswordInput" placeholder="접속 비밀번호를 입력하세요" 
+                           style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+                    <button class="btn" onclick="checkGlobalPassword()" style="width: 100%;">🚀 접속하기</button>
+                    <div id="globalPasswordError" style="color: #e53e3e; margin-top: 10px; font-size: 0.9rem; display: none;">
+                        ❌ 비밀번호가 올바르지 않습니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 서비스 컨테이너 (비밀번호 확인 후 표시) -->
+        <div id="mainServiceContainer" class="hidden">
+
         <!-- API Key 설정 -->
         <div class="card api-key-input" id="apiKeySection">
             <h3>🔑 OpenAI API 키 설정</h3>
@@ -444,6 +463,8 @@
                 <button class="btn" onclick="resetExam()">다시 시작</button>
             </div>
         </div>
+
+        </div> <!-- End of mainServiceContainer -->
     </div>
 
     <script>
@@ -460,13 +481,79 @@
         let isAdminLoggedIn = false;
         let editingProblemSetKey = null;
         let ADMIN_PASSWORD = 'admin123'; // 기본값, 환경변수로 덮어쓰기 가능
+        let GLOBAL_PASSWORD = ''; // 전역 접속 비밀번호
+        let isGloballyAuthenticated = false;
+        let authToken = null; // API 인증 토큰
         let shuffledOptionsMap = {}; // 섞인 선택지의 매핑을 저장
         
+        // 전역 비밀번호 확인 함수
+        async function checkGlobalPassword() {
+            const inputPassword = document.getElementById('globalPasswordInput').value.trim();
+            const errorDiv = document.getElementById('globalPasswordError');
+            
+            if (!inputPassword) {
+                showPasswordError('비밀번호를 입력해주세요.');
+                return;
+            }
+
+            try {
+                // 서버에서 인증 시도
+                const authResult = await apiCall('auth', {
+                    method: 'POST',
+                    body: JSON.stringify({ password: inputPassword })
+                });
+
+                if (authResult.success) {
+                    authToken = authResult.token;
+                    isGloballyAuthenticated = true;
+                    
+                    // 인증 성공 시 메인 서비스 로드
+                    await initializeMainService();
+                    
+                    // UI 전환
+                    document.getElementById('globalPasswordSection').classList.add('hidden');
+                    document.getElementById('mainServiceContainer').classList.remove('hidden');
+                    
+                    // 비밀번호 입력창 초기화
+                    document.getElementById('globalPasswordInput').value = '';
+                    errorDiv.style.display = 'none';
+                    
+                } else {
+                    showPasswordError('비밀번호가 올바르지 않습니다.');
+                }
+            } catch (error) {
+                console.error('Authentication failed:', error);
+                showPasswordError('인증 중 오류가 발생했습니다.');
+            }
+        }
+
+        function showPasswordError(message) {
+            const errorDiv = document.getElementById('globalPasswordError');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // 3초 후 에러 메시지 숨기기
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // 메인 서비스 초기화
+        async function initializeMainService() {
+            await loadEnvironmentVariables();
+            updateApiKeyUI();
+            await loadProblemSetsIndex();
+            await loadExamList();
+            renderMath();
+        }
+
         // 환경변수 로드 함수
         async function loadEnvironmentVariables() {
             try {
-                // 서버에서 환경변수 로드
-                const config = await apiCall('config');
+                // 서버에서 환경변수 로드 (인증 토큰 포함)
+                const config = await apiCall('config', {
+                    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+                });
                 
                 if (config.openaiApiKey) {
                     apiKey = config.openaiApiKey;
@@ -475,6 +562,10 @@
                 
                 if (config.adminPassword) {
                     ADMIN_PASSWORD = config.adminPassword;
+                }
+                
+                if (config.globalPassword) {
+                    GLOBAL_PASSWORD = config.globalPassword;
                 }
                 
             } catch (error) {
@@ -529,11 +620,18 @@
         // API 함수들
         async function apiCall(endpoint, options = {}) {
             try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+                
+                // 인증된 경우 토큰 추가 (auth 엔드포인트 제외)
+                if (authToken && endpoint !== 'auth') {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
                 const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...options.headers
-                    },
+                    headers,
                     ...options
                 });
                 
@@ -626,11 +724,20 @@
 
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadEnvironmentVariables();
-            updateApiKeyUI();
-            await loadProblemSetsIndex();
-            await loadExamList();
-            renderMath();
+            // 전역 비밀번호 보호가 활성화된 경우 로그인 화면 표시
+            // 개발 환경에서는 바로 메인 서비스 로드 (필요시 주석 해제)
+            // if (window.location.hostname === 'localhost') {
+            //     await initializeMainService();
+            //     document.getElementById('globalPasswordSection').classList.add('hidden');
+            //     document.getElementById('mainServiceContainer').classList.remove('hidden');
+            // }
+            
+            // Enter 키 지원
+            document.getElementById('globalPasswordInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkGlobalPassword();
+                }
+            });
         });
         
         // API 키 UI 업데이트
