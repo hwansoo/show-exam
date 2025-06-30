@@ -86,24 +86,22 @@ async function saveFileToGitHub(filePath, data, sha = null) {
   }
 }
 
-// Unified read function (try GitHub first, fallback to local)
+// Simplified read function (use local files for now)
 async function readDataFile(relativePath) {
-  // Try reading from GitHub first
-  if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
-    try {
-      const githubData = await getFileFromGitHub(relativePath);
-      if (githubData) {
-        return githubData;
-      }
-    } catch (error) {
-      console.error('GitHub read failed, falling back to local:', error);
-    }
+  console.log('Reading file:', relativePath);
+  
+  // Use local file system for reading (stable)
+  const localPath = path.join(process.cwd(), relativePath);
+  console.log('Local path:', localPath);
+  
+  const content = readJsonFile(localPath);
+  if (!content) {
+    console.error('Failed to read local file:', localPath);
+    return null;
   }
   
-  // Fallback to local file system
-  const localPath = path.join(process.cwd(), relativePath);
-  const content = readJsonFile(localPath);
-  return content ? { content, sha: null } : null;
+  console.log('Successfully read file, questions count:', content.questions?.length || 0);
+  return { content, sha: null };
 }
 
 // Unified write function (use GitHub for persistence)
@@ -224,12 +222,9 @@ export default function handler(req, res) {
         // Save problem set file to GitHub
         const newFileName = `${newKey}.json`;
         
-        try {
-          await writeDataFile(`data/${newFileName}`, problemSetData);
-        } catch (error) {
-          console.error('Failed to save problem set to GitHub:', error);
-          return res.status(500).json({ error: 'Failed to save problem set' });
-        }
+        // Temporarily disable write operations until GitHub API is fixed
+        console.log('Write operations temporarily disabled for debugging');
+        return res.status(501).json({ error: 'Write operations temporarily disabled - use local development for testing' });
 
         // Update index
         const newProblemSet = {
