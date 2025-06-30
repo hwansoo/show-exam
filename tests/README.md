@@ -1,81 +1,78 @@
-# Authentication Test Suite
+# Test Directory Structure
 
-This directory contains a comprehensive Playwright test suite for verifying the JWT authentication flow in the show-exam application.
+This directory contains organized test suites for the show-exam application.
 
-## Test Files
+## Directory Structure
 
-### Core Test Suite
-- **`auth-flow.spec.js`** - Main authentication flow tests (14 test cases)
-  - Global password protection verification
-  - Valid/invalid password handling
-  - Token storage and persistence
-  - Cross-page navigation
-  - Error handling
-  - API endpoint protection
-
-### Debugging and Analysis
-- **`auth-debug.spec.js`** - Step-by-step debugging with detailed console output
-- **`api-test.spec.js`** - Direct API endpoint testing
-- **`env-test.spec.js`** - Environment variable and password testing
-- **`browser-inspect.spec.js`** - Live site inspection and network monitoring
-- **`final-report.spec.js`** - Comprehensive analysis report generator
-
-## Configuration
-- **`../playwright.config.js`** - Playwright configuration for multiple browsers
-- **`../package.json`** - Updated with test scripts
-
-## Usage
-
-```bash
-# Run all tests
-npm test
-
-# Run main authentication tests only
-npm run test:auth
-
-# Run debug tests with detailed output
-npm run test:debug
-
-# Generate comprehensive analysis
-npm run test:analysis
-
-# Run with visible browser
-npm run test:headed
-
-# Open interactive UI
-npm run test:ui
-
-# View test reports
-npm run test:report
+```
+tests/
+├── auth/           # Authentication-related tests
+├── api/            # API endpoint tests (CRUD operations)
+├── grading/        # AI grading system tests
+├── deployment/     # Deployment and infrastructure tests
+├── archive/        # Archived/legacy test files
+└── README.md       # This file
 ```
 
-## Test Results Summary
+## Test Categories
 
-As of the last test run:
-- ✅ **3 tests passing** - UI and error handling work correctly
-- ❌ **11 tests failing** - Due to backend authentication issue
-- 🔍 **Root cause identified** - GLOBAL_PASSWORD environment variable mismatch
+### Authentication Tests (`auth/`)
+- `auth-flow.spec.js` - Complete authentication flow testing
+- `auth-debug.spec.js` - Authentication debugging and troubleshooting
+- `auth-with-env.spec.js` - Environment variable authentication testing
+- `quick-auth-test.spec.js` - Quick authentication verification
 
-## Current Status
+### API Tests (`api/`)
+- `api-test.spec.js` - General API functionality tests
+- `test-problem-sets-api.spec.js` - Problem sets CRUD operations
+- `test-write-operations.spec.js` - Create/Update operations testing
+- `test-delete-operations.spec.js` - Delete operations testing
+- `test-consistency-fix.spec.js` - Data consistency verification
+- `debug-api-data.spec.js` - API data debugging
 
-The authentication system frontend is fully functional, but the backend API is rejecting the default password "exam2024". This is likely due to the GLOBAL_PASSWORD environment variable in Vercel being set to a different value.
+### Grading System Tests (`grading/`)
+- `test-new-grading-system.spec.js` - AI grading system testing
+- `test-grading-quick.spec.js` - Quick grading functionality tests
+- `test-improved-grading-demo.spec.js` - Grading improvement demonstrations
 
-## What Works
-- Frontend UI loads correctly
-- Password input and form submission
-- Error handling and display
-- Network request formatting
-- CORS configuration
+### Deployment Tests (`deployment/`)
+- `test-latest-deployment.spec.js` - Latest deployment verification
+- `test-newest-deployment.spec.js` - Newest deployment testing
+- `debug-deployment.spec.js` - Deployment debugging
 
-## What Needs Fixing
-- Backend API authentication logic
-- Environment variable configuration in Vercel
+### Archived Tests (`archive/`)
+- Legacy test files kept for reference
+- Debug utilities and one-off tests
+- Historical test implementations
 
-## Next Steps
+## Running Tests
 
-1. Check Vercel environment variables
-2. Set GLOBAL_PASSWORD to "exam2024"
-3. Redeploy the application
-4. Re-run tests to verify fix
+### Run all tests:
+```bash
+npx playwright test
+```
 
-Once fixed, all tests should pass and verify complete authentication flow functionality.
+### Run specific test category:
+```bash
+npx playwright test tests/auth/
+npx playwright test tests/api/
+npx playwright test tests/grading/
+```
+
+### Run specific test file:
+```bash
+npx playwright test tests/grading/test-new-grading-system.spec.js
+```
+
+## Test Configuration
+
+Test configuration is managed in:
+- `playwright.config.js` - Main Playwright configuration
+- `.env` - Environment variables for testing
+
+## Notes
+
+- All tests require authentication with the global password
+- API tests require the backend services to be running
+- Grading tests may require OpenAI API key for full functionality
+- Some tests may take longer due to AI processing time

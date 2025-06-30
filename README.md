@@ -10,7 +10,9 @@ A comprehensive web-based exam practice platform with admin management capabilit
 - **Random Shuffling**: Options are randomized to prevent memorization
 - **Compound Questions**: Multi-part questions with sub-questions
 - **Automatic Grading**: Objective questions graded instantly
-- **AI Essay Grading**: Optional OpenAI integration for essay evaluation
+- **AI Essay Grading**: Advanced OpenAI GPT-4 integration with educational rubrics
+- **Smart Feedback**: Detailed feedback with strengths and improvement suggestions
+- **Mathematical Recognition**: Proper scoring for mathematical accuracy over keywords
 
 ### 🛠️ Admin Management
 - **Password Protection**: Secure admin panel access
@@ -29,12 +31,40 @@ A comprehensive web-based exam practice platform with admin management capabilit
 
 ```
 Frontend (Static HTML/JS) → Vercel Serverless Functions → JSON File Storage
+                                        ↓
+                              AI Grading System (OpenAI GPT-4)
 ```
 
 - **Frontend**: Single-page application with vanilla JavaScript
 - **Backend**: Node.js serverless functions for API operations
 - **Storage**: JSON files in the repository (git-tracked)
+- **AI Grading**: OpenAI GPT-4 integration for essay evaluation
 - **Deployment**: Vercel with automatic deployments
+
+## 📁 Project Structure
+
+```
+show-exam/
+├── api/                    # Serverless API functions
+│   ├── auth.js            # JWT authentication
+│   ├── grade-essay.js     # AI grading system
+│   ├── problem-sets.js    # CRUD operations
+│   └── config.js          # API configuration
+├── data/                  # Problem sets storage
+│   ├── index.json         # Problem sets index
+│   ├── math_basic.json    # Sample math problems
+│   └── physics_basic.json # Sample physics problems
+├── tests/                 # Organized test suites
+│   ├── auth/             # Authentication tests
+│   ├── api/              # API endpoint tests
+│   ├── grading/          # AI grading tests
+│   ├── deployment/       # Deployment tests
+│   └── archive/          # Legacy tests
+├── index.html            # Main application
+├── vercel.json           # Vercel configuration
+├── playwright.config.js  # Test configuration
+└── package.json          # Dependencies
+```
 
 ## 🚀 Quick Start
 
@@ -136,6 +166,8 @@ See the prompt generation guide for complete format documentation.
 - `POST /api/problem-sets` - Create new problem set
 - `PUT /api/problem-sets?key={key}` - Update problem set
 - `DELETE /api/problem-sets?key={key}` - Delete problem set
+- `POST /api/grade-essay` - AI-powered essay grading
+- `POST /api/auth` - User authentication
 
 ### Response Format
 ```json
