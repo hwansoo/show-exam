@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "problem_sets": [
+    {
+      "key": "math_basic",
+      "file": "math_basic.json",
+      "title": "기초 수학",
+      "description": "기본적인 수학 개념을 다루는 문제들",
+      "category": "mathematics",
+      "difficulty": "beginner",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "is_built_in": true
+    },
+    {
+      "key": "physics_basic", 
+      "file": "physics_basic.json",
+      "title": "기초 물리학",
+      "description": "물리학의 기본 개념과 공식들",
+      "category": "physics",
+      "difficulty": "beginner",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "is_built_in": true
+    }
+  ]
+}
