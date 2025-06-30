@@ -1,0 +1,47 @@
+{
+  "title": "기초 수학",
+  "description": "기본적인 수학 개념을 다루는 문제들",
+  "questions": [
+    {
+      "id": 1,
+      "type": "single_choice",
+      "question": "다음 중 $\\sqrt{16}$의 값은?",
+      "options": ["2", "4", "8", "16"],
+      "correct_answer": 1,
+      "score": 10,
+      "explanation": "$\\sqrt{16} = 4$입니다. 16의 제곱근은 4입니다."
+    },
+    {
+      "id": 2,
+      "type": "multiple_choice",
+      "question": "다음 중 소수인 것을 모두 고르세요.",
+      "options": ["2", "3", "4", "5", "6", "7"],
+      "correct_answers": [0, 1, 3, 5],
+      "score": 15,
+      "explanation": "소수는 1과 자기 자신으로만 나누어지는 자연수입니다. 2, 3, 5, 7이 소수입니다."
+    },
+    {
+      "id": 3,
+      "type": "true_false",
+      "question": "$\\pi$는 무리수이다.",
+      "correct_answer": true,
+      "score": 10,
+      "explanation": "$\\pi$는 무리수입니다. 유한소수나 순환소수로 표현할 수 없습니다."
+    },
+    {
+      "id": 4,
+      "type": "short_answer",
+      "question": "$2x + 5 = 13$일 때, $x$의 값을 구하세요.",
+      "correct_answer": "4",
+      "score": 15,
+      "explanation": "$2x + 5 = 13$에서 $2x = 8$이므로 $x = 4$입니다."
+    },
+    {
+      "id": 5,
+      "type": "essay",
+      "question": "피타고라스 정리를 설명하고, 직각삼각형에서 빗변의 길이가 5, 한 변의 길이가 3일 때 다른 한 변의 길이를 구하는 과정을 서술하세요.",
+      "score": 20,
+      "explanation": "피타고라스 정리: $a^2 + b^2 = c^2$. 주어진 조건에서 $3^2 + b^2 = 5^2$이므로 $b^2 = 16$, 따라서 $b = 4$입니다."
+    }
+  ]
+}

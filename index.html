@@ -356,6 +356,49 @@
             <p>주관식 문제 채점을 위해 OpenAI API 키가 필요합니다.</p>
             <input type="password" id="apiKeyInput" placeholder="OpenAI API 키를 입력하세요">
             <button class="btn" onclick="saveApiKey()">저장</button>
+            <button class="btn" onclick="showAdminLogin()" style="float: right; background: linear-gradient(145deg, #e53e3e, #c53030);">🔧 관리자</button>
+        </div>
+
+        <!-- 관리자 로그인 -->
+        <div class="card hidden" id="adminLoginSection">
+            <h3>🔐 관리자 로그인</h3>
+            <p>문제집 관리를 위해 관리자 비밀번호를 입력하세요.</p>
+            <input type="password" id="adminPasswordInput" placeholder="관리자 비밀번호">
+            <button class="btn" onclick="adminLogin()">로그인</button>
+            <button class="btn" onclick="hideAdminLogin()" style="background: #718096;">취소</button>
+        </div>
+
+        <!-- 관리자 패널 -->
+        <div class="card hidden" id="adminPanel">
+            <h2>🛠️ 관리자 패널</h2>
+            <div style="margin-bottom: 20px;">
+                <button class="btn" onclick="showAddProblemSet()">➕ 문제집 추가</button>
+                <button class="btn" onclick="hideAdminPanel()" style="background: #718096;">나가기</button>
+            </div>
+            
+            <!-- 문제집 목록 -->
+            <div id="adminProblemSetsList">
+                <h3>📚 저장된 문제집</h3>
+                <div id="problemSetsManagement"></div>
+            </div>
+        </div>
+
+        <!-- 문제집 추가/편집 폼 -->
+        <div class="card hidden" id="addProblemSetForm">
+            <h3 id="formTitle">➕ 새 문제집 추가</h3>
+            <div style="margin-bottom: 15px;">
+                <label for="problemSetKey">문제집 키 (영문, 숫자, 언더스코어만):</label>
+                <input type="text" id="problemSetKey" placeholder="예: custom_math_1" style="width: 100%; padding: 10px; margin-top: 5px; border: 2px solid #e2e8f0; border-radius: 8px;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label for="problemSetJSON">JSON 데이터:</label>
+                <textarea id="problemSetJSON" rows="20" placeholder='JSON 형식으로 문제집을 입력하세요...' style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 0.9rem;"></textarea>
+            </div>
+            <div>
+                <button class="btn" onclick="saveProblemSet()" id="saveBtn">저장</button>
+                <button class="btn" onclick="hideAddProblemSetForm()" style="background: #718096;">취소</button>
+                <button class="btn" onclick="showJSONExample()" style="background: #38a169;">📄 예시 보기</button>
+            </div>
         </div>
 
         <!-- 시험 선택 화면 -->
@@ -404,116 +447,248 @@
     </div>
 
     <script>
-        // 샘플 시험 데이터
-        const examData = {
-            "math_basic": {
-                "title": "기초 수학",
-                "description": "기본적인 수학 개념을 다루는 문제들",
-                "questions": [
-                    {
-                        "id": 1,
-                        "type": "single_choice",
-                        "question": "다음 중 $\\sqrt{16}$의 값은?",
-                        "options": ["2", "4", "8", "16"],
-                        "correct_answer": 1,
-                        "score": 10,
-                        "explanation": "$\\sqrt{16} = 4$입니다. 16의 제곱근은 4입니다."
-                    },
-                    {
-                        "id": 2,
-                        "type": "multiple_choice",
-                        "question": "다음 중 소수인 것을 모두 고르세요.",
-                        "options": ["2", "3", "4", "5", "6", "7"],
-                        "correct_answers": [0, 1, 3, 5],
-                        "score": 15,
-                        "explanation": "소수는 1과 자기 자신으로만 나누어지는 자연수입니다. 2, 3, 5, 7이 소수입니다."
-                    },
-                    {
-                        "id": 3,
-                        "type": "true_false",
-                        "question": "$\\pi$는 무리수이다.",
-                        "correct_answer": true,
-                        "score": 10,
-                        "explanation": "$\\pi$는 무리수입니다. 유한소수나 순환소수로 표현할 수 없습니다."
-                    },
-                    {
-                        "id": 4,
-                        "type": "short_answer",
-                        "question": "$2x + 5 = 13$일 때, $x$의 값을 구하세요.",
-                        "correct_answer": "4",
-                        "score": 15,
-                        "explanation": "$2x + 5 = 13$에서 $2x = 8$이므로 $x = 4$입니다."
-                    },
-                    {
-                        "id": 5,
-                        "type": "essay",
-                        "question": "피타고라스 정리를 설명하고, 직각삼각형에서 빗변의 길이가 5, 한 변의 길이가 3일 때 다른 한 변의 길이를 구하는 과정을 서술하세요.",
-                        "score": 20,
-                        "explanation": "피타고라스 정리: $a^2 + b^2 = c^2$. 주어진 조건에서 $3^2 + b^2 = 5^2$이므로 $b^2 = 16$, 따라서 $b = 4$입니다."
-                    }
-                ]
-            },
-            "physics_basic": {
-                "title": "기초 물리학",
-                "description": "물리학의 기본 개념과 공식들",
-                "questions": [
-                    {
-                        "id": 1,
-                        "type": "single_choice",
-                        "question": "자유낙하하는 물체의 가속도는 대략 얼마인가?",
-                        "options": ["$9.8 \\text{ m/s}$", "$9.8 \\text{ m/s}^2$", "$98 \\text{ m/s}^2$", "$0.98 \\text{ m/s}^2$"],
-                        "correct_answer": 1,
-                        "score": 10,
-                        "explanation": "지구에서 중력가속도는 약 $9.8 \\text{ m/s}^2$입니다."
-                    },
-                    {
-                        "id": 2,
-                        "type": "compound",
-                        "question": "운동 법칙에 관한 문제",
-                        "score": 30,
-                        "sub_questions": [
-                            {
-                                "id": "2a",
-                                "type": "true_false",
-                                "question": "뉴턴의 제1법칙은 관성의 법칙이다.",
-                                "correct_answer": true,
-                                "score": 10,
-                                "explanation": "뉴턴의 제1법칙은 관성의 법칙으로 불립니다."
-                            },
-                            {
-                                "id": "2b",
-                                "type": "short_answer",
-                                "question": "질량이 2kg인 물체에 4N의 힘을 가했을 때의 가속도는? (단위: $\\text{m/s}^2$)",
-                                "correct_answer": "2",
-                                "score": 10,
-                                "explanation": "$F = ma$에서 $a = F/m = 4/2 = 2 \\text{ m/s}^2$입니다."
-                            },
-                            {
-                                "id": "2c",
-                                "type": "essay",
-                                "question": "뉴턴의 제3법칙을 설명하고 일상생활에서의 예를 하나 들어보세요.",
-                                "score": 10,
-                                "explanation": "작용-반작용의 법칙입니다. 예: 걸을 때 발로 땅을 밀면 땅도 발을 같은 크기로 밀어줍니다."
-                            }
-                        ]
-                    }
-                ]
-            }
-        };
+        // API 설정
+        const API_BASE_URL = window.location.hostname === 'localhost' ? '' : '';
+        
+        // 문제집 데이터 저장소
+        let examData = {};
+        let problemSetsIndex = null;
 
         let currentExam = null;
         let userAnswers = {};
-        let apiKey = localStorage.getItem('openai_api_key') || '';
+        let apiKey = '';
+        let isAdminLoggedIn = false;
+        let editingProblemSetKey = null;
+        let ADMIN_PASSWORD = 'admin123'; // 기본값, 환경변수로 덮어쓰기 가능
+        let shuffledOptionsMap = {}; // 섞인 선택지의 매핑을 저장
+        
+        // 환경변수 로드 함수
+        async function loadEnvironmentVariables() {
+            // 빌드 시 환경변수 주입 (예: webpack DefinePlugin, Vite 등)
+            const envApiKey = typeof process !== 'undefined' && process.env && process.env.OPENAI_API_KEY;
+            const envAdminPassword = typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD;
+            
+            if (envApiKey) {
+                apiKey = envApiKey;
+                console.log('OpenAI API Key loaded from environment variables');
+            } else {
+                // .env 파일에서 로드 시도 (서버 환경에서)
+                try {
+                    const response = await fetch('/.env');
+                    if (response.ok) {
+                        const envText = await response.text();
+                        const envVars = parseEnvFile(envText);
+                        if (envVars.OPENAI_API_KEY) {
+                            apiKey = envVars.OPENAI_API_KEY;
+                            console.log('OpenAI API Key loaded from .env file');
+                        }
+                        if (envVars.ADMIN_PASSWORD) {
+                            ADMIN_PASSWORD = envVars.ADMIN_PASSWORD;
+                        }
+                    }
+                } catch (error) {
+                    // .env 파일 로드 실패 시 localStorage에서 가져오기
+                    apiKey = localStorage.getItem('openai_api_key') || '';
+                }
+            }
+            
+            if (envAdminPassword) {
+                ADMIN_PASSWORD = envAdminPassword;
+            }
+            
+            // localStorage에서 사용자가 입력한 키가 있으면 우선 사용
+            const storedApiKey = localStorage.getItem('openai_api_key');
+            if (storedApiKey) {
+                apiKey = storedApiKey;
+            }
+        }
+        
+        // .env 파일 파싱 함수
+        function parseEnvFile(envText) {
+            const envVars = {};
+            const lines = envText.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed && !trimmed.startsWith('#')) {
+                    const [key, ...valueParts] = trimmed.split('=');
+                    if (key && valueParts.length > 0) {
+                        envVars[key.trim()] = valueParts.join('=').trim().replace(/^["']|["']$/g, '');
+                    }
+                }
+            }
+            
+            return envVars;
+        }
+
+        // 배열 섞기 함수 (Fisher-Yates shuffle)
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // 선택지 섞기 및 매핑 생성
+        function shuffleOptionsWithMapping(options, questionId) {
+            const indexedOptions = options.map((option, index) => ({ option, originalIndex: index }));
+            const shuffled = shuffleArray(indexedOptions);
+            
+            // 원본 인덱스 -> 섞인 인덱스 매핑
+            const originalToShuffled = {};
+            // 섞인 인덱스 -> 원본 인덱스 매핑
+            const shuffledToOriginal = {};
+            
+            shuffled.forEach((item, newIndex) => {
+                originalToShuffled[item.originalIndex] = newIndex;
+                shuffledToOriginal[newIndex] = item.originalIndex;
+            });
+            
+            shuffledOptionsMap[questionId] = {
+                originalToShuffled,
+                shuffledToOriginal,
+                shuffledOptions: shuffled.map(item => item.option)
+            };
+            
+            return shuffled.map(item => item.option);
+        }
+
+        // API 함수들
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+
+        async function loadProblemSetsIndex() {
+            try {
+                problemSetsIndex = await apiCall('problem-sets');
+                return problemSetsIndex;
+            } catch (error) {
+                console.error('Failed to load problem sets index:', error);
+                // Fallback to localStorage for development
+                return loadFallbackData();
+            }
+        }
+
+        async function loadProblemSet(key) {
+            try {
+                const problemSet = await apiCall(`problem-sets?key=${key}`);
+                examData[key] = problemSet;
+                return problemSet;
+            } catch (error) {
+                console.error(`Failed to load problem set ${key}:`, error);
+                return null;
+            }
+        }
+
+        async function saveProblemSetToAPI(key, data) {
+            try {
+                await apiCall('problem-sets', {
+                    method: 'POST',
+                    body: JSON.stringify({ key, data })
+                });
+                return true;
+            } catch (error) {
+                console.error('Failed to save problem set:', error);
+                throw error;
+            }
+        }
+
+        async function updateProblemSetInAPI(key, data) {
+            try {
+                await apiCall(`problem-sets?key=${key}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ data })
+                });
+                return true;
+            } catch (error) {
+                console.error('Failed to update problem set:', error);
+                throw error;
+            }
+        }
+
+        async function deleteProblemSetFromAPI(key) {
+            try {
+                await apiCall(`problem-sets?key=${key}`, {
+                    method: 'DELETE'
+                });
+                return true;
+            } catch (error) {
+                console.error('Failed to delete problem set:', error);
+                throw error;
+            }
+        }
+
+        // 개발용 fallback 데이터
+        function loadFallbackData() {
+            return {
+                version: "1.0.0",
+                problem_sets: [
+                    {
+                        key: "math_basic",
+                        title: "기초 수학",
+                        description: "기본적인 수학 개념을 다루는 문제들",
+                        is_built_in: true
+                    }
+                ]
+            };
+        }
 
         // 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            if (apiKey) {
-                document.getElementById('apiKeyInput').value = apiKey;
-                document.getElementById('apiKeySection').style.display = 'none';
-            }
-            loadExamList();
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadEnvironmentVariables();
+            updateApiKeyUI();
+            await loadProblemSetsIndex();
+            await loadExamList();
             renderMath();
         });
+        
+        // API 키 UI 업데이트
+        function updateApiKeyUI() {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const apiKeySection = document.getElementById('apiKeySection');
+            
+            if (apiKey) {
+                apiKeyInput.value = '***API키가 설정되었습니다***';
+                apiKeyInput.disabled = true;
+                
+                // 환경변수에서 로드된 경우 알림 표시
+                const envSource = document.createElement('p');
+                envSource.style.cssText = 'color: #38a169; font-size: 0.9rem; margin-top: 5px;';
+                envSource.innerHTML = '✅ API 키가 환경변수에서 자동으로 로드되었습니다.';
+                
+                if (!document.querySelector('.env-source-notice')) {
+                    envSource.className = 'env-source-notice';
+                    apiKeySection.appendChild(envSource);
+                }
+            } else {
+                // 환경변수에서 로드되지 않은 경우 사용자 입력 허용
+                const notice = document.createElement('p');
+                notice.style.cssText = 'color: #e53e3e; font-size: 0.9rem; margin-top: 5px;';
+                notice.innerHTML = '⚠️ 환경변수에서 API 키를 찾을 수 없습니다. 직접 입력해주세요.';
+                notice.className = 'env-source-notice';
+                apiKeySection.appendChild(notice);
+            }
+        }
 
         function renderMath() {
             if (window.renderMathInElement) {
@@ -527,30 +702,254 @@
         }
 
         function saveApiKey() {
-            const key = document.getElementById('apiKeyInput').value.trim();
-            if (key) {
+            const inputElement = document.getElementById('apiKeyInput');
+            const key = inputElement.value.trim();
+            
+            // 환경변수로 이미 설정된 경우 사용자 입력 무시
+            if (inputElement.disabled) {
+                alert('API 키가 이미 환경변수에서 설정되었습니다.');
+                return;
+            }
+            
+            if (key && key !== '***API키가 설정되었습니다***') {
                 apiKey = key;
                 localStorage.setItem('openai_api_key', key);
-                document.getElementById('apiKeySection').style.display = 'none';
+                updateApiKeyUI();
                 alert('API 키가 저장되었습니다.');
             } else {
                 alert('유효한 API 키를 입력해주세요.');
             }
         }
 
-        function loadExamList() {
+        // 관리자 기능
+        function showAdminLogin() {
+            document.getElementById('adminLoginSection').classList.remove('hidden');
+        }
+
+        function hideAdminLogin() {
+            document.getElementById('adminLoginSection').classList.add('hidden');
+            document.getElementById('adminPasswordInput').value = '';
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPasswordInput').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                hideAdminLogin();
+                showAdminPanel();
+                loadProblemSetsManagement();
+            } else {
+                alert('비밀번호가 틀렸습니다.');
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('adminPanel').classList.remove('hidden');
+        }
+
+        function hideAdminPanel() {
+            document.getElementById('adminPanel').classList.add('hidden');
+            isAdminLoggedIn = false;
+        }
+
+        function showAddProblemSet() {
+            editingProblemSetKey = null;
+            document.getElementById('formTitle').textContent = '➕ 새 문제집 추가';
+            document.getElementById('problemSetKey').value = '';
+            document.getElementById('problemSetJSON').value = '';
+            document.getElementById('saveBtn').textContent = '저장';
+            document.getElementById('addProblemSetForm').classList.remove('hidden');
+        }
+
+        function hideAddProblemSetForm() {
+            document.getElementById('addProblemSetForm').classList.add('hidden');
+            editingProblemSetKey = null;
+        }
+
+        function showJSONExample() {
+            const example = {
+                "title": "예시 문제집",
+                "description": "JSON 형식의 예시 문제집입니다",
+                "questions": [
+                    {
+                        "id": 1,
+                        "type": "single_choice",
+                        "question": "2 + 2 = ?",
+                        "options": ["3", "4", "5", "6"],
+                        "correct_answer": 1,
+                        "score": 10,
+                        "explanation": "2 + 2 = 4입니다."
+                    }
+                ]
+            };
+            document.getElementById('problemSetJSON').value = JSON.stringify(example, null, 2);
+        }
+
+        async function saveProblemSet() {
+            const key = document.getElementById('problemSetKey').value.trim();
+            const jsonText = document.getElementById('problemSetJSON').value.trim();
+
+            if (!key) {
+                alert('문제집 키를 입력해주세요.');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(key)) {
+                alert('문제집 키는 영문, 숫자, 언더스코어만 사용할 수 있습니다.');
+                return;
+            }
+
+            if (!jsonText) {
+                alert('JSON 데이터를 입력해주세요.');
+                return;
+            }
+
+            try {
+                const problemSet = JSON.parse(jsonText);
+                
+                // 기본 구조 검증
+                if (!problemSet.title || !problemSet.description || !problemSet.questions) {
+                    alert('JSON 형식이 올바르지 않습니다. title, description, questions 필드가 필요합니다.');
+                    return;
+                }
+
+                // API에 저장
+                if (editingProblemSetKey) {
+                    // 편집 모드
+                    await updateProblemSetInAPI(key, problemSet);
+                    examData[key] = problemSet; // 로컬 캐시 업데이트
+                } else {
+                    // 새로 생성
+                    await saveProblemSetToAPI(key, problemSet);
+                    examData[key] = problemSet; // 로컬 캐시에 추가
+                }
+
+                alert('문제집이 저장되었습니다.');
+                hideAddProblemSetForm();
+                await loadProblemSetsIndex(); // 인덱스 새로고침
+                await loadProblemSetsManagement();
+                await loadExamList(); // 시험 목록 새로고침
+
+            } catch (error) {
+                if (error.message.includes('already exists')) {
+                    alert('이미 존재하는 문제집 키입니다.');
+                } else {
+                    alert('문제집 저장 중 오류가 발생했습니다: ' + error.message);
+                }
+            }
+        }
+
+        function getCustomProblemSets() {
+            // For backward compatibility, check localStorage
+            const stored = localStorage.getItem('custom_problem_sets');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function getAllProblemSets() {
+            return examData;
+        }
+
+        function editProblemSet(key) {
+            const allSets = getAllProblemSets();
+            const problemSet = allSets[key];
+            
+            if (!problemSet) {
+                alert('문제집을 찾을 수 없습니다.');
+                return;
+            }
+
+            editingProblemSetKey = key;
+            document.getElementById('formTitle').textContent = '✏️ 문제집 편집';
+            document.getElementById('problemSetKey').value = key;
+            document.getElementById('problemSetJSON').value = JSON.stringify(problemSet, null, 2);
+            document.getElementById('saveBtn').textContent = '수정 저장';
+            document.getElementById('addProblemSetForm').classList.remove('hidden');
+        }
+
+        async function deleteProblemSet(key) {
+            const problemSetInfo = problemSetsIndex.problem_sets.find(ps => ps.key === key);
+            
+            if (problemSetInfo && problemSetInfo.is_built_in) {
+                alert('기본 문제집은 삭제할 수 없습니다.');
+                return;
+            }
+
+            if (confirm(`'${key}' 문제집을 삭제하시겠습니까?`)) {
+                try {
+                    await deleteProblemSetFromAPI(key);
+                    delete examData[key]; // 로컬 캐시에서 제거
+                    
+                    await loadProblemSetsIndex(); // 인덱스 새로고침
+                    await loadProblemSetsManagement();
+                    await loadExamList(); // 시험 목록 새로고침
+                    alert('문제집이 삭제되었습니다.');
+                } catch (error) {
+                    alert('문제집 삭제 중 오류가 발생했습니다: ' + error.message);
+                }
+            }
+        }
+
+        async function loadProblemSetsManagement() {
+            const container = document.getElementById('problemSetsManagement');
+            container.innerHTML = '';
+            
+            if (!problemSetsIndex) {
+                container.innerHTML = '<p>문제집 목록을 불러오는 중...</p>';
+                return;
+            }
+            
+            for (const problemSetInfo of problemSetsIndex.problem_sets) {
+                const key = problemSetInfo.key;
+                const exam = examData[key];
+                
+                if (!exam) {
+                    // 아직 로드되지 않은 문제집은 로드
+                    await loadProblemSet(key);
+                }
+                
+                const setDiv = document.createElement('div');
+                setDiv.style.cssText = 'border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin: 10px 0; background: #f8fafc;';
+                
+                const questionCount = examData[key] ? getTotalQuestionCount(examData[key].questions) : '?';
+                
+                setDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>${problemSetInfo.title} ${problemSetInfo.is_built_in ? '(기본)' : '(커스텀)'}</h4>
+                            <p style="color: #718096; margin: 5px 0;">${problemSetInfo.description}</p>
+                            <small style="color: #a0aec0;">키: ${key} | 문제 수: ${questionCount}</small>
+                        </div>
+                        <div>
+                            <button onclick="editProblemSet('${key}')" style="background: #4299e1; color: white; border: none; padding: 8px 12px; border-radius: 4px; margin: 0 5px; cursor: pointer;">편집</button>
+                            ${!problemSetInfo.is_built_in ? `<button onclick="deleteProblemSet('${key}')" style="background: #e53e3e; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">삭제</button>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(setDiv);
+            }
+        }
+
+        async function loadExamList() {
             const examGrid = document.getElementById('examGrid');
             examGrid.innerHTML = '';
 
-            for (const [key, exam] of Object.entries(examData)) {
+            if (!problemSetsIndex) {
+                examGrid.innerHTML = '<p>문제집 목록을 불러오는 중...</p>';
+                return;
+            }
+
+            for (const problemSetInfo of problemSetsIndex.problem_sets) {
+                const key = problemSetInfo.key;
+                
                 const examCard = document.createElement('div');
                 examCard.className = 'exam-card';
                 examCard.onclick = () => startExam(key);
                 
                 examCard.innerHTML = `
-                    <h3>${exam.title}</h3>
-                    <p>${exam.description}</p>
-                    <p><strong>문제 수:</strong> ${getTotalQuestionCount(exam.questions)}</p>
+                    <h3>${problemSetInfo.title}</h3>
+                    <p>${problemSetInfo.description}</p>
+                    <p><strong>카테고리:</strong> ${problemSetInfo.category || 'general'}</p>
                 `;
                 
                 examGrid.appendChild(examCard);
@@ -569,9 +968,20 @@
             return count;
         }
 
-        function startExam(examKey) {
+        async function startExam(examKey) {
+            // 문제집이 로드되지 않았다면 로드
+            if (!examData[examKey]) {
+                await loadProblemSet(examKey);
+            }
+            
             currentExam = examData[examKey];
+            if (!currentExam) {
+                alert('문제집을 불러올 수 없습니다.');
+                return;
+            }
+            
             userAnswers = {};
+            shuffledOptionsMap = {}; // 섞인 선택지 매핑 초기화
             
             document.getElementById('examSelector').classList.add('hidden');
             document.getElementById('examContainer').classList.remove('hidden');
@@ -627,9 +1037,10 @@
             
             switch (question.type) {
                 case 'single_choice':
+                    const shuffledSingleOptions = shuffleOptionsWithMapping(question.options, questionId);
                     optionsHtml = `
                         <div class="options">
-                            ${question.options.map((option, index) => `
+                            ${shuffledSingleOptions.map((option, index) => `
                                 <div class="option">
                                     <input type="radio" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
                                     <label for="q${questionId}_${index}">${option}</label>
@@ -640,9 +1051,10 @@
                     break;
                     
                 case 'multiple_choice':
+                    const shuffledMultipleOptions = shuffleOptionsWithMapping(question.options, questionId);
                     optionsHtml = `
                         <div class="options">
-                            ${question.options.map((option, index) => `
+                            ${shuffledMultipleOptions.map((option, index) => `
                                 <div class="option">
                                     <input type="checkbox" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
                                     <label for="q${questionId}_${index}">${option}</label>
@@ -690,9 +1102,10 @@
             
             switch (subQuestion.type) {
                 case 'single_choice':
+                    const shuffledSubSingleOptions = shuffleOptionsWithMapping(subQuestion.options, questionId);
                     optionsHtml = `
                         <div class="options">
-                            ${subQuestion.options.map((option, index) => `
+                            ${shuffledSubSingleOptions.map((option, index) => `
                                 <div class="option">
                                     <input type="radio" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
                                     <label for="q${questionId}_${index}">${option}</label>
@@ -703,9 +1116,10 @@
                     break;
                     
                 case 'multiple_choice':
+                    const shuffledSubMultipleOptions = shuffleOptionsWithMapping(subQuestion.options, questionId);
                     optionsHtml = `
                         <div class="options">
-                            ${subQuestion.options.map((option, index) => `
+                            ${shuffledSubMultipleOptions.map((option, index) => `
                                 <div class="option">
                                     <input type="checkbox" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
                                     <label for="q${questionId}_${index}">${option}</label>
@@ -788,13 +1202,28 @@
         function collectSingleAnswer(question, questionId) {
             switch (question.type) {
                 case 'single_choice':
-                case 'true_false':
                     const radio = document.querySelector(`input[name="q${questionId}"]:checked`);
-                    return radio ? radio.value : null;
+                    if (radio) {
+                        const shuffledIndex = parseInt(radio.value);
+                        // 섞인 인덱스를 원본 인덱스로 변환
+                        const mapping = shuffledOptionsMap[questionId];
+                        return mapping ? mapping.shuffledToOriginal[shuffledIndex] : shuffledIndex;
+                    }
+                    return null;
                     
                 case 'multiple_choice':
                     const checkboxes = document.querySelectorAll(`input[name="q${questionId}"]:checked`);
-                    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+                    const shuffledIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
+                    // 섞인 인덱스들을 원본 인덱스들로 변환
+                    const mapping = shuffledOptionsMap[questionId];
+                    if (mapping) {
+                        return shuffledIndices.map(index => mapping.shuffledToOriginal[index]);
+                    }
+                    return shuffledIndices;
+                    
+                case 'true_false':
+                    const tfRadio = document.querySelector(`input[name="q${questionId}"]:checked`);
+                    return tfRadio ? tfRadio.value : null;
                     
                 case 'short_answer':
                 case 'essay':
@@ -1148,6 +1577,7 @@
         function resetExam() {
             currentExam = null;
             userAnswers = {};
+            shuffledOptionsMap = {}; // 섞인 선택지 매핑 초기화
             
             document.getElementById('examSelector').classList.remove('hidden');
             document.getElementById('examContainer').classList.add('hidden');

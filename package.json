@@ -1,0 +1,27 @@
+{
+  "name": "show-exam",
+  "version": "1.0.0",
+  "description": "Interactive exam practice service with admin management",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static build complete'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "exam",
+    "practice",
+    "education",
+    "quiz",
+    "math",
+    "physics"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
