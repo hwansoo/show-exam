@@ -139,6 +139,57 @@ async function saveFileToGitHub(filePath, data, sha = null) {
   }
 }
 
+async function deleteFileFromGitHub(filePath, sha) {
+  try {
+    const https = require('https');
+    const url = `${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
+    
+    const payload = {
+      message: `Delete ${filePath}`,
+      sha: sha
+    };
+    
+    const postData = JSON.stringify(payload);
+    
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'show-exam-vercel-app',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+      
+      const req = https.request(url, options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(JSON.parse(data));
+            } else {
+              const errorData = JSON.parse(data);
+              reject(new Error(`GitHub API error: ${res.statusCode} - ${errorData.message}`));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      
+      req.on('error', reject);
+      req.write(postData);
+      req.end();
+    });
+  } catch (error) {
+    console.error('Error deleting from GitHub:', error);
+    throw error;
+  }
+}
+
 // Data validation functions
 function validateProblemSetData(data) {
   if (!data || typeof data !== 'object') {
@@ -332,8 +383,66 @@ module.exports = async function handler(req, res) {
         break;
 
       case 'DELETE':
-        // Delete problem set - temporarily disabled
-        res.status(501).json({ error: 'Write operations temporarily disabled' });
+        // Delete problem set
+        try {
+          if (!key) {
+            return res.status(400).json({ error: 'Key is required' });
+          }
+
+          console.log('Deleting problem set:', key);
+          
+          if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+            return res.status(500).json({ error: 'GitHub integration not configured' });
+          }
+
+          // Get current index from GitHub
+          const deleteIndexData = await getFileFromGitHub('data/index.json');
+          if (!deleteIndexData) {
+            return res.status(500).json({ error: 'Failed to read index from GitHub' });
+          }
+
+          const problemSetToDelete = deleteIndexData.content.problem_sets.find(ps => ps.key === key);
+          if (!problemSetToDelete) {
+            return res.status(404).json({ error: 'Problem set not found' });
+          }
+
+          // Don't allow deleting built-in problem sets
+          if (problemSetToDelete.is_built_in) {
+            return res.status(403).json({ error: 'Cannot delete built-in problem sets' });
+          }
+
+          console.log('Deleting problem set file:', problemSetToDelete.file);
+
+          // Get the file info to get its SHA for deletion
+          const fileToDelete = await getFileFromGitHub(`data/${problemSetToDelete.file}`);
+          if (fileToDelete) {
+            // Delete the problem set file from GitHub
+            await deleteFileFromGitHub(`data/${problemSetToDelete.file}`, fileToDelete.sha);
+            console.log('Problem set file deleted from GitHub');
+          } else {
+            console.log('Problem set file not found in GitHub, skipping file deletion');
+          }
+
+          // Update index (remove the problem set)
+          deleteIndexData.content.problem_sets = deleteIndexData.content.problem_sets.filter(ps => ps.key !== key);
+          
+          console.log('Updating index in GitHub...');
+          await saveFileToGitHub('data/index.json', deleteIndexData.content, deleteIndexData.sha);
+
+          console.log('Problem set deleted successfully:', key);
+          res.status(200).json({ 
+            message: 'Problem set deleted successfully',
+            key: key,
+            title: problemSetToDelete.title
+          });
+          
+        } catch (error) {
+          console.error('Failed to delete problem set:', error);
+          res.status(500).json({ 
+            error: 'Failed to delete problem set', 
+            details: error.message 
+          });
+        }
         break;
 
       default:
