@@ -90,9 +90,13 @@ async function saveFileToGitHub(filePath, data, sha = null) {
 async function readDataFile(relativePath) {
   // Try reading from GitHub first
   if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
-    const githubData = await getFileFromGitHub(relativePath);
-    if (githubData) {
-      return githubData;
+    try {
+      const githubData = await getFileFromGitHub(relativePath);
+      if (githubData) {
+        return githubData;
+      }
+    } catch (error) {
+      console.error('GitHub read failed, falling back to local:', error);
     }
   }
   
@@ -105,7 +109,12 @@ async function readDataFile(relativePath) {
 // Unified write function (use GitHub for persistence)
 async function writeDataFile(relativePath, data, sha = null) {
   if (GITHUB_TOKEN && GITHUB_OWNER && GITHUB_REPO) {
-    return await saveFileToGitHub(relativePath, data, sha);
+    try {
+      return await saveFileToGitHub(relativePath, data, sha);
+    } catch (error) {
+      console.error('GitHub write failed:', error);
+      throw new Error(`Failed to save to GitHub: ${error.message}`);
+    }
   } else {
     throw new Error('GitHub integration not configured for file persistence');
   }
@@ -171,10 +180,20 @@ export default function handler(req, res) {
           res.status(200).json(problemSetData.content);
         } else {
           // Get all problem sets index
+          console.log('Attempting to read index file...');
+          console.log('GitHub config:', { 
+            hasToken: !!GITHUB_TOKEN, 
+            hasOwner: !!GITHUB_OWNER, 
+            hasRepo: !!GITHUB_REPO 
+          });
+          
           const indexData = await readDataFile('data/index.json');
           if (!indexData) {
+            console.error('Failed to read index data');
             return res.status(500).json({ error: 'Failed to read index' });
           }
+          
+          console.log('Successfully read index data');
           res.status(200).json(indexData.content);
         }
         break;
