@@ -486,6 +486,26 @@
         let authToken = null; // API 인증 토큰
         let shuffledOptionsMap = {}; // 섞인 선택지의 매핑을 저장
         
+        // 토큰 저장 및 로드 함수
+        function saveAuthToken(token) {
+            localStorage.setItem('show-exam-auth-token', token);
+            authToken = token;
+        }
+        
+        function loadAuthToken() {
+            const token = localStorage.getItem('show-exam-auth-token');
+            if (token) {
+                authToken = token;
+                return token;
+            }
+            return null;
+        }
+        
+        function clearAuthToken() {
+            localStorage.removeItem('show-exam-auth-token');
+            authToken = null;
+        }
+        
         // 전역 비밀번호 확인 함수
         async function checkGlobalPassword() {
             const inputPassword = document.getElementById('globalPasswordInput').value.trim();
@@ -504,7 +524,7 @@
                 });
 
                 if (authResult.success) {
-                    authToken = authResult.token;
+                    saveAuthToken(authResult.token);
                     isGloballyAuthenticated = true;
                     
                     // 인증 성공 시 메인 서비스 로드
@@ -637,6 +657,16 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
+                    
+                    // 401 Unauthorized - 토큰이 유효하지 않음
+                    if (response.status === 401 && authToken) {
+                        clearAuthToken();
+                        isGloballyAuthenticated = false;
+                        // 로그인 화면으로 리다이렉트
+                        document.getElementById('globalPasswordSection').classList.remove('hidden');
+                        document.getElementById('mainServiceContainer').classList.add('hidden');
+                    }
+                    
                     throw new Error(errorData.error || `HTTP ${response.status}`);
                 }
                 
@@ -794,6 +824,27 @@
 
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
+            // 저장된 토큰이 있는지 확인
+            const savedToken = loadAuthToken();
+            if (savedToken) {
+                try {
+                    // 토큰 유효성 확인을 위해 API 호출 시도
+                    const testResult = await apiCall('problem-sets');
+                    if (testResult && !testResult.error) {
+                        // 토큰이 유효하면 메인 서비스 로드
+                        isGloballyAuthenticated = true;
+                        await initializeMainService();
+                        document.getElementById('globalPasswordSection').classList.add('hidden');
+                        document.getElementById('mainServiceContainer').classList.remove('hidden');
+                        return; // 인증 성공 시 여기서 종료
+                    }
+                } catch (error) {
+                    console.log('Saved token is invalid, clearing...');
+                }
+                // 토큰이 유효하지 않으면 제거
+                clearAuthToken();
+            }
+            
             // 전역 비밀번호 보호가 활성화된 경우 로그인 화면 표시
             // 개발 환경에서는 바로 메인 서비스 로드 (필요시 주석 해제)
             // if (window.location.hostname === 'localhost') {

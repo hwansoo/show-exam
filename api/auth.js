@@ -1,16 +1,29 @@
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 
-// Simple session storage (in production, use Redis or database)
-const sessions = new Map();
+// JWT secret key - in production, use a secure random key
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Generate a simple token
+// Generate JWT token
 function generateToken() {
-  return crypto.randomBytes(32).toString('hex');
+  return jwt.sign(
+    { 
+      authenticated: true,
+      issued: Date.now()
+    },
+    JWT_SECRET,
+    { expiresIn: '24h' }
+  );
 }
 
-// Verify authentication token
+// Verify JWT token
 export function verifyToken(token) {
-  return sessions.has(token);
+  try {
+    jwt.verify(token, JWT_SECRET);
+    return true;
+  } catch (error) {
+    // Token is invalid or expired
+    return false;
+  }
 }
 
 // Authentication API endpoint
@@ -38,17 +51,8 @@ export default function handler(req, res) {
       }
 
       if (password === globalPassword) {
-        // Generate session token
+        // Generate JWT token
         const token = generateToken();
-        
-        // Store session (expires in 24 hours)
-        sessions.set(token, {
-          created: Date.now(),
-          expires: Date.now() + (24 * 60 * 60 * 1000) // 24 hours
-        });
-        
-        // Clean up expired sessions
-        cleanupExpiredSessions();
         
         res.status(200).json({ 
           success: true, 
@@ -74,15 +78,5 @@ export default function handler(req, res) {
       success: false, 
       error: `Method ${req.method} not allowed` 
     });
-  }
-}
-
-// Clean up expired sessions
-function cleanupExpiredSessions() {
-  const now = Date.now();
-  for (const [token, session] of sessions.entries()) {
-    if (now > session.expires) {
-      sessions.delete(token);
-    }
   }
 }
