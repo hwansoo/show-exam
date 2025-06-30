@@ -5,6 +5,12 @@ const jwt = require('jsonwebtoken');
 // JWT secret key - same as auth.js
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+// GitHub API configuration
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_OWNER = process.env.GITHUB_OWNER;
+const GITHUB_REPO = process.env.GITHUB_REPO;
+const GITHUB_API_BASE = 'https://api.github.com';
+
 // Verify JWT token - same logic as auth.js
 function verifyToken(token) {
   try {
@@ -24,6 +30,99 @@ function readJsonFile(filePath) {
     console.error('Error reading file:', error);
     return null;
   }
+}
+
+// GitHub API helper functions
+async function getFileFromGitHub(filePath) {
+  try {
+    const response = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`, {
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // File doesn't exist
+      }
+      throw new Error(`GitHub API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const content = Buffer.from(data.content, 'base64').toString('utf8');
+    return {
+      content: JSON.parse(content),
+      sha: data.sha
+    };
+  } catch (error) {
+    console.error('Error reading from GitHub:', error);
+    throw error;
+  }
+}
+
+async function saveFileToGitHub(filePath, data, sha = null) {
+  try {
+    const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
+    
+    const payload = {
+      message: `${sha ? 'Update' : 'Create'} ${filePath}`,
+      content: content
+    };
+    
+    if (sha) {
+      payload.sha = sha;
+    }
+    
+    const response = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`GitHub API error: ${response.status} - ${errorData.message}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving to GitHub:', error);
+    throw error;
+  }
+}
+
+// Data validation functions
+function validateProblemSetData(data) {
+  if (!data || typeof data !== 'object') {
+    return { valid: false, error: 'Invalid data format' };
+  }
+  
+  if (!data.title || typeof data.title !== 'string') {
+    return { valid: false, error: 'Title is required and must be a string' };
+  }
+  
+  if (!data.description || typeof data.description !== 'string') {
+    return { valid: false, error: 'Description is required and must be a string' };
+  }
+  
+  if (!Array.isArray(data.questions) || data.questions.length === 0) {
+    return { valid: false, error: 'Questions array is required and must not be empty' };
+  }
+  
+  // Validate each question
+  for (let i = 0; i < data.questions.length; i++) {
+    const question = data.questions[i];
+    if (!question.id || !question.type || !question.question) {
+      return { valid: false, error: `Question ${i + 1} is missing required fields (id, type, question)` };
+    }
+  }
+  
+  return { valid: true };
 }
 
 // Authentication middleware
@@ -107,8 +206,81 @@ module.exports = function handler(req, res) {
         break;
 
       case 'POST':
-        // Create new problem set - temporarily disabled
-        res.status(501).json({ error: 'Write operations temporarily disabled' });
+        // Create new problem set
+        try {
+          console.log('Creating new problem set...');
+          
+          if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
+            return res.status(500).json({ error: 'GitHub integration not configured' });
+          }
+          
+          const { key: newKey, data: problemSetData } = req.body;
+          
+          if (!newKey || !problemSetData) {
+            return res.status(400).json({ error: 'Key and data are required' });
+          }
+
+          // Validate key format
+          if (!/^[a-zA-Z0-9_]+$/.test(newKey)) {
+            return res.status(400).json({ error: 'Invalid key format. Use only letters, numbers, and underscores.' });
+          }
+
+          // Validate problem set data
+          const validation = validateProblemSetData(problemSetData);
+          if (!validation.valid) {
+            return res.status(400).json({ error: validation.error });
+          }
+
+          // Get current index from GitHub
+          console.log('Fetching current index from GitHub...');
+          const indexData = await getFileFromGitHub('data/index.json');
+          if (!indexData) {
+            return res.status(500).json({ error: 'Failed to read index from GitHub' });
+          }
+
+          // Check if key already exists
+          if (indexData.content.problem_sets.some(ps => ps.key === newKey)) {
+            return res.status(409).json({ error: 'Problem set with this key already exists' });
+          }
+
+          // Save problem set file to GitHub
+          const newFileName = `${newKey}.json`;
+          console.log('Saving problem set file to GitHub:', newFileName);
+          
+          await saveFileToGitHub(`data/${newFileName}`, problemSetData);
+
+          // Update index
+          const newProblemSet = {
+            key: newKey,
+            file: newFileName,
+            title: problemSetData.title,
+            description: problemSetData.description,
+            category: 'custom',
+            difficulty: 'unknown',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            is_built_in: false
+          };
+
+          indexData.content.problem_sets.push(newProblemSet);
+          
+          console.log('Updating index in GitHub...');
+          await saveFileToGitHub('data/index.json', indexData.content, indexData.sha);
+
+          console.log('Problem set created successfully:', newKey);
+          res.status(201).json({ 
+            message: 'Problem set created successfully',
+            key: newKey,
+            title: problemSetData.title
+          });
+          
+        } catch (error) {
+          console.error('Failed to create problem set:', error);
+          res.status(500).json({ 
+            error: 'Failed to create problem set', 
+            details: error.message 
+          });
+        }
         break;
 
       case 'PUT':
