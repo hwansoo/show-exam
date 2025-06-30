@@ -32,29 +32,50 @@ function readJsonFile(filePath) {
   }
 }
 
-// GitHub API helper functions
+// GitHub API helper functions using Node.js built-in modules
 async function getFileFromGitHub(filePath) {
   try {
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`, {
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json'
-      }
+    const https = require('https');
+    const url = `${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
+    
+    return new Promise((resolve, reject) => {
+      const options = {
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'show-exam-vercel-app'
+        }
+      };
+      
+      const req = https.get(url, options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            if (res.statusCode === 404) {
+              resolve(null);
+              return;
+            }
+            
+            if (res.statusCode !== 200) {
+              reject(new Error(`GitHub API error: ${res.statusCode}`));
+              return;
+            }
+            
+            const responseData = JSON.parse(data);
+            const content = Buffer.from(responseData.content, 'base64').toString('utf8');
+            resolve({
+              content: JSON.parse(content),
+              sha: responseData.sha
+            });
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      
+      req.on('error', reject);
     });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null; // File doesn't exist
-      }
-      throw new Error(`GitHub API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    const content = Buffer.from(data.content, 'base64').toString('utf8');
-    return {
-      content: JSON.parse(content),
-      sha: data.sha
-    };
   } catch (error) {
     console.error('Error reading from GitHub:', error);
     throw error;
@@ -63,6 +84,9 @@ async function getFileFromGitHub(filePath) {
 
 async function saveFileToGitHub(filePath, data, sha = null) {
   try {
+    const https = require('https');
+    const url = `${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`;
+    
     const content = Buffer.from(JSON.stringify(data, null, 2)).toString('base64');
     
     const payload = {
@@ -74,22 +98,41 @@ async function saveFileToGitHub(filePath, data, sha = null) {
       payload.sha = sha;
     }
     
-    const response = await fetch(`${GITHUB_API_BASE}/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
+    const postData = JSON.stringify(payload);
+    
+    return new Promise((resolve, reject) => {
+      const options = {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'show-exam-vercel-app',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      };
+      
+      const req = https.request(url, options, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve(JSON.parse(data));
+            } else {
+              const errorData = JSON.parse(data);
+              reject(new Error(`GitHub API error: ${res.statusCode} - ${errorData.message}`));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+      
+      req.on('error', reject);
+      req.write(postData);
+      req.end();
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(`GitHub API error: ${response.status} - ${errorData.message}`);
-    }
-    
-    return await response.json();
   } catch (error) {
     console.error('Error saving to GitHub:', error);
     throw error;
