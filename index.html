@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시험 문제 연습 서비스</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .exam-selector {
+            margin-bottom: 30px;
+        }
+
+        .exam-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .exam-card {
+            background: linear-gradient(145deg, #f0f4f8, #e2e8f0);
+            border: none;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .exam-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            background: linear-gradient(145deg, #e2e8f0, #cbd5e0);
+        }
+
+        .exam-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .exam-card p {
+            color: #718096;
+            font-size: 0.95rem;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .question-number {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .question-score {
+            background: #38a169;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .sub-questions {
+            margin-left: 20px;
+            border-left: 3px solid #e2e8f0;
+            padding-left: 20px;
+        }
+
+        .sub-question {
+            margin-bottom: 20px;
+        }
+
+        .options {
+            margin: 15px 0;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .option:hover {
+            background-color: #f1f5f9;
+        }
+
+        .option input {
+            margin-right: 12px;
+            transform: scale(1.2);
+        }
+
+        .option label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .text-answer {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .text-answer:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-container {
+            margin-top: 30px;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(145deg, #48bb78, #38a169);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-display h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .answer-review {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid #cbd5e0;
+        }
+
+        .answer-review.correct {
+            background: #f0fff4;
+            border-left-color: #48bb78;
+        }
+
+        .answer-review.incorrect {
+            background: #fff5f5;
+            border-left-color: #f56565;
+        }
+
+        .answer-review.partial {
+            background: #fffbf0;
+            border-left-color: #ed8936;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-badge.correct {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-badge.incorrect {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .status-badge.partial {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .explanation {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .api-key-input {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f0f4f8;
+            border-radius: 10px;
+        }
+
+        .api-key-input input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 시험 문제 연습 서비스</h1>
+            <p>다양한 유형의 문제를 풀고 실력을 향상시켜보세요!</p>
+        </div>
+
+        <!-- API Key 설정 -->
+        <div class="card api-key-input" id="apiKeySection">
+            <h3>🔑 OpenAI API 키 설정</h3>
+            <p>주관식 문제 채점을 위해 OpenAI API 키가 필요합니다.</p>
+            <input type="password" id="apiKeyInput" placeholder="OpenAI API 키를 입력하세요">
+            <button class="btn" onclick="saveApiKey()">저장</button>
+        </div>
+
+        <!-- 시험 선택 화면 -->
+        <div class="card exam-selector" id="examSelector">
+            <h2>📋 시험 선택</h2>
+            <div class="exam-grid" id="examGrid">
+                <!-- 시험 목록이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+
+        <!-- 문제 풀이 화면 -->
+        <div class="card hidden" id="examContainer">
+            <div id="examHeader">
+                <h2 id="examTitle"></h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p>문제 <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span></p>
+            </div>
+            
+            <div id="questionContainer">
+                <!-- 문제들이 여기에 동적으로 생성됩니다 -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="submitAnswers()" id="submitBtn">답안 제출</button>
+                <button class="btn" onclick="resetExam()">처음으로</button>
+            </div>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div class="card hidden" id="resultsContainer">
+            <div class="score-display" id="scoreDisplay">
+                <h2 id="finalScore"></h2>
+                <p id="scoreDescription"></p>
+            </div>
+            
+            <div id="answerReviews">
+                <!-- 답안 검토가 여기에 표시됩니다 -->
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="resetExam()">다시 시작</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 샘플 시험 데이터
+        const examData = {
+            "math_basic": {
+                "title": "기초 수학",
+                "description": "기본적인 수학 개념을 다루는 문제들",
+                "questions": [
+                    {
+                        "id": 1,
+                        "type": "single_choice",
+                        "question": "다음 중 $\\sqrt{16}$의 값은?",
+                        "options": ["2", "4", "8", "16"],
+                        "correct_answer": 1,
+                        "score": 10,
+                        "explanation": "$\\sqrt{16} = 4$입니다. 16의 제곱근은 4입니다."
+                    },
+                    {
+                        "id": 2,
+                        "type": "multiple_choice",
+                        "question": "다음 중 소수인 것을 모두 고르세요.",
+                        "options": ["2", "3", "4", "5", "6", "7"],
+                        "correct_answers": [0, 1, 3, 5],
+                        "score": 15,
+                        "explanation": "소수는 1과 자기 자신으로만 나누어지는 자연수입니다. 2, 3, 5, 7이 소수입니다."
+                    },
+                    {
+                        "id": 3,
+                        "type": "true_false",
+                        "question": "$\\pi$는 무리수이다.",
+                        "correct_answer": true,
+                        "score": 10,
+                        "explanation": "$\\pi$는 무리수입니다. 유한소수나 순환소수로 표현할 수 없습니다."
+                    },
+                    {
+                        "id": 4,
+                        "type": "short_answer",
+                        "question": "$2x + 5 = 13$일 때, $x$의 값을 구하세요.",
+                        "correct_answer": "4",
+                        "score": 15,
+                        "explanation": "$2x + 5 = 13$에서 $2x = 8$이므로 $x = 4$입니다."
+                    },
+                    {
+                        "id": 5,
+                        "type": "essay",
+                        "question": "피타고라스 정리를 설명하고, 직각삼각형에서 빗변의 길이가 5, 한 변의 길이가 3일 때 다른 한 변의 길이를 구하는 과정을 서술하세요.",
+                        "score": 20,
+                        "explanation": "피타고라스 정리: $a^2 + b^2 = c^2$. 주어진 조건에서 $3^2 + b^2 = 5^2$이므로 $b^2 = 16$, 따라서 $b = 4$입니다."
+                    }
+                ]
+            },
+            "physics_basic": {
+                "title": "기초 물리학",
+                "description": "물리학의 기본 개념과 공식들",
+                "questions": [
+                    {
+                        "id": 1,
+                        "type": "single_choice",
+                        "question": "자유낙하하는 물체의 가속도는 대략 얼마인가?",
+                        "options": ["$9.8 \\text{ m/s}$", "$9.8 \\text{ m/s}^2$", "$98 \\text{ m/s}^2$", "$0.98 \\text{ m/s}^2$"],
+                        "correct_answer": 1,
+                        "score": 10,
+                        "explanation": "지구에서 중력가속도는 약 $9.8 \\text{ m/s}^2$입니다."
+                    },
+                    {
+                        "id": 2,
+                        "type": "compound",
+                        "question": "운동 법칙에 관한 문제",
+                        "score": 30,
+                        "sub_questions": [
+                            {
+                                "id": "2a",
+                                "type": "true_false",
+                                "question": "뉴턴의 제1법칙은 관성의 법칙이다.",
+                                "correct_answer": true,
+                                "score": 10,
+                                "explanation": "뉴턴의 제1법칙은 관성의 법칙으로 불립니다."
+                            },
+                            {
+                                "id": "2b",
+                                "type": "short_answer",
+                                "question": "질량이 2kg인 물체에 4N의 힘을 가했을 때의 가속도는? (단위: $\\text{m/s}^2$)",
+                                "correct_answer": "2",
+                                "score": 10,
+                                "explanation": "$F = ma$에서 $a = F/m = 4/2 = 2 \\text{ m/s}^2$입니다."
+                            },
+                            {
+                                "id": "2c",
+                                "type": "essay",
+                                "question": "뉴턴의 제3법칙을 설명하고 일상생활에서의 예를 하나 들어보세요.",
+                                "score": 10,
+                                "explanation": "작용-반작용의 법칙입니다. 예: 걸을 때 발로 땅을 밀면 땅도 발을 같은 크기로 밀어줍니다."
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        let currentExam = null;
+        let userAnswers = {};
+        let apiKey = localStorage.getItem('openai_api_key') || '';
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            if (apiKey) {
+                document.getElementById('apiKeyInput').value = apiKey;
+                document.getElementById('apiKeySection').style.display = 'none';
+            }
+            loadExamList();
+            renderMath();
+        });
+
+        function renderMath() {
+            if (window.renderMathInElement) {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ]
+                });
+            }
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key) {
+                apiKey = key;
+                localStorage.setItem('openai_api_key', key);
+                document.getElementById('apiKeySection').style.display = 'none';
+                alert('API 키가 저장되었습니다.');
+            } else {
+                alert('유효한 API 키를 입력해주세요.');
+            }
+        }
+
+        function loadExamList() {
+            const examGrid = document.getElementById('examGrid');
+            examGrid.innerHTML = '';
+
+            for (const [key, exam] of Object.entries(examData)) {
+                const examCard = document.createElement('div');
+                examCard.className = 'exam-card';
+                examCard.onclick = () => startExam(key);
+                
+                examCard.innerHTML = `
+                    <h3>${exam.title}</h3>
+                    <p>${exam.description}</p>
+                    <p><strong>문제 수:</strong> ${getTotalQuestionCount(exam.questions)}</p>
+                `;
+                
+                examGrid.appendChild(examCard);
+            }
+        }
+
+        function getTotalQuestionCount(questions) {
+            let count = 0;
+            questions.forEach(q => {
+                if (q.type === 'compound') {
+                    count += q.sub_questions.length;
+                } else {
+                    count += 1;
+                }
+            });
+            return count;
+        }
+
+        function startExam(examKey) {
+            currentExam = examData[examKey];
+            userAnswers = {};
+            
+            document.getElementById('examSelector').classList.add('hidden');
+            document.getElementById('examContainer').classList.remove('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            
+            document.getElementById('examTitle').textContent = currentExam.title;
+            document.getElementById('totalQuestions').textContent = getTotalQuestionCount(currentExam.questions);
+            
+            renderQuestions();
+            updateProgress();
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionContainer');
+            container.innerHTML = '';
+            
+            let questionNumber = 1;
+            
+            currentExam.questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question-container';
+                
+                if (question.type === 'compound') {
+                    questionDiv.innerHTML = `
+                        <div class="question-header">
+                            <span class="question-number">${questionNumber}</span>
+                            <span class="question-score">${question.score}점</span>
+                        </div>
+                        <div class="question-text">${question.question}</div>
+                        <div class="sub-questions">
+                            ${question.sub_questions.map((subQ, subIndex) => {
+                                const subQuestionHtml = renderSubQuestion(subQ, `${question.id}-${subIndex}`, questionNumber + subIndex);
+                                return `<div class="sub-question">${subQuestionHtml}</div>`;
+                            }).join('')}
+                        </div>
+                    `;
+                    questionNumber += question.sub_questions.length;
+                } else {
+                    questionDiv.innerHTML = renderSingleQuestion(question, questionNumber);
+                    questionNumber++;
+                }
+                
+                container.appendChild(questionDiv);
+            });
+            
+            setTimeout(renderMath, 100);
+        }
+
+        function renderSingleQuestion(question, questionNumber) {
+            const questionId = question.id;
+            
+            let optionsHtml = '';
+            
+            switch (question.type) {
+                case 'single_choice':
+                    optionsHtml = `
+                        <div class="options">
+                            ${question.options.map((option, index) => `
+                                <div class="option">
+                                    <input type="radio" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
+                                    <label for="q${questionId}_${index}">${option}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'multiple_choice':
+                    optionsHtml = `
+                        <div class="options">
+                            ${question.options.map((option, index) => `
+                                <div class="option">
+                                    <input type="checkbox" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
+                                    <label for="q${questionId}_${index}">${option}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'true_false':
+                    optionsHtml = `
+                        <div class="options">
+                            <div class="option">
+                                <input type="radio" id="q${questionId}_true" name="q${questionId}" value="true">
+                                <label for="q${questionId}_true">참</label>
+                            </div>
+                            <div class="option">
+                                <input type="radio" id="q${questionId}_false" name="q${questionId}" value="false">
+                                <label for="q${questionId}_false">거짓</label>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'short_answer':
+                case 'essay':
+                    optionsHtml = `
+                        <textarea class="text-answer" id="q${questionId}" placeholder="답안을 입력하세요..."></textarea>
+                    `;
+                    break;
+            }
+            
+            return `
+                <div class="question-header">
+                    <span class="question-number">${questionNumber}</span>
+                    <span class="question-score">${question.score}점</span>
+                </div>
+                <div class="question-text">${question.question}</div>
+                ${optionsHtml}
+            `;
+        }
+
+        function renderSubQuestion(subQuestion, questionId, questionNumber) {
+            let optionsHtml = '';
+            
+            switch (subQuestion.type) {
+                case 'single_choice':
+                    optionsHtml = `
+                        <div class="options">
+                            ${subQuestion.options.map((option, index) => `
+                                <div class="option">
+                                    <input type="radio" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
+                                    <label for="q${questionId}_${index}">${option}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'multiple_choice':
+                    optionsHtml = `
+                        <div class="options">
+                            ${subQuestion.options.map((option, index) => `
+                                <div class="option">
+                                    <input type="checkbox" id="q${questionId}_${index}" name="q${questionId}" value="${index}">
+                                    <label for="q${questionId}_${index}">${option}</label>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case 'true_false':
+                    optionsHtml = `
+                        <div class="options">
+                            <div class="option">
+                                <input type="radio" id="q${questionId}_true" name="q${questionId}" value="true">
+                                <label for="q${questionId}_true">참</label>
+                            </div>
+                            <div class="option">
+                                <input type="radio" id="q${questionId}_false" name="q${questionId}" value="false">
+                                <label for="q${questionId}_false">거짓</label>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'short_answer':
+                case 'essay':
+                    optionsHtml = `
+                        <textarea class="text-answer" id="q${questionId}" placeholder="답안을 입력하세요..."></textarea>
+                    `;
+                    break;
+            }
+            
+            return `
+                <div class="question-header">
+                    <span class="question-number">${questionNumber}</span>
+                    <span class="question-score">${subQuestion.score}점</span>
+                </div>
+                <div class="question-text">${subQuestion.question}</div>
+                ${optionsHtml}
+            `;
+        }
+
+        function updateProgress() {
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        async function submitAnswers() {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> 채점 중...';
+            
+            // 답안 수집
+            collectAnswers();
+            
+            // 채점 수행
+            const results = await gradeAnswers();
+            
+            // 결과 표시
+            showResults(results);
+            
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '답안 제출';
+        }
+
+        function collectAnswers() {
+            userAnswers = {};
+            
+            currentExam.questions.forEach((question, index) => {
+                if (question.type === 'compound') {
+                    question.sub_questions.forEach((subQ, subIndex) => {
+                        const questionId = `${question.id}-${subIndex}`;
+                        userAnswers[questionId] = collectSingleAnswer(subQ, questionId);
+                    });
+                } else {
+                    userAnswers[question.id] = collectSingleAnswer(question, question.id);
+                }
+            });
+        }
+
+        function collectSingleAnswer(question, questionId) {
+            switch (question.type) {
+                case 'single_choice':
+                case 'true_false':
+                    const radio = document.querySelector(`input[name="q${questionId}"]:checked`);
+                    return radio ? radio.value : null;
+                    
+                case 'multiple_choice':
+                    const checkboxes = document.querySelectorAll(`input[name="q${questionId}"]:checked`);
+                    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+                    
+                case 'short_answer':
+                case 'essay':
+                    const textarea = document.getElementById(`q${questionId}`);
+                    return textarea ? textarea.value.trim() : '';
+                    
+                default:
+                    return null;
+            }
+        }
+
+        async function gradeAnswers() {
+            const results = {};
+            
+            for (const question of currentExam.questions) {
+                if (question.type === 'compound') {
+                    for (let subIndex = 0; subIndex < question.sub_questions.length; subIndex++) {
+                        const subQ = question.sub_questions[subIndex];
+                        const questionId = `${question.id}-${subIndex}`;
+                        const userAnswer = userAnswers[questionId];
+                        
+                        if (subQ.type === 'essay') {
+                            results[questionId] = await gradeEssayQuestion(subQ, userAnswer);
+                        } else {
+                            results[questionId] = gradeObjectiveQuestion(subQ, userAnswer);
+                        }
+                    }
+                } else {
+                    const questionId = question.id;
+                    const userAnswer = userAnswers[questionId];
+                    
+                    if (question.type === 'essay') {
+                        results[questionId] = await gradeEssayQuestion(question, userAnswer);
+                    } else {
+                        results[questionId] = gradeObjectiveQuestion(question, userAnswer);
+                    }
+                }
+            }
+            
+            return results;
+        }
+
+        function gradeObjectiveQuestion(question, userAnswer) {
+            let isCorrect = false;
+            let score = 0;
+            
+            switch (question.type) {
+                case 'single_choice':
+                    isCorrect = parseInt(userAnswer) === question.correct_answer;
+                    score = isCorrect ? question.score : 0;
+                    break;
+                    
+                case 'multiple_choice':
+                    const correctAnswers = question.correct_answers.sort();
+                    const userAnswersSorted = (userAnswer || []).sort();
+                    isCorrect = JSON.stringify(correctAnswers) === JSON.stringify(userAnswersSorted);
+                    score = isCorrect ? question.score : 0;
+                    break;
+                    
+                case 'true_false':
+                    const correctAnswer = question.correct_answer.toString();
+                    isCorrect = userAnswer === correctAnswer;
+                    score = isCorrect ? question.score : 0;
+                    break;
+                    
+                case 'short_answer':
+                    isCorrect = userAnswer && userAnswer.toLowerCase() === question.correct_answer.toLowerCase();
+                    score = isCorrect ? question.score : 0;
+                    break;
+            }
+            
+            return {
+                isCorrect,
+                score,
+                maxScore: question.score,
+                userAnswer,
+                correctAnswer: question.correct_answer || question.correct_answers,
+                explanation: question.explanation
+            };
+        }
+
+        async function gradeEssayQuestion(question, userAnswer) {
+            if (!apiKey) {
+                return {
+                    isCorrect: false,
+                    score: 0,
+                    maxScore: question.score,
+                    userAnswer,
+                    explanation: question.explanation,
+                    feedback: "API 키가 설정되지 않아 주관식 문제를 채점할 수 없습니다."
+                };
+            }
+
+            if (!userAnswer || userAnswer.trim() === '') {
+                return {
+                    isCorrect: false,
+                    score: 0,
+                    maxScore: question.score,
+                    userAnswer: '',
+                    explanation: question.explanation,
+                    feedback: "답안이 입력되지 않았습니다."
+                };
+            }
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-3.5-turbo',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `당신은 시험 채점자입니다. 주어진 문제와 학생의 답안을 평가하여 다음 형식의 JSON으로 응답해주세요:
+                                {
+                                    "score": 점수(0-${question.score}),
+                                    "feedback": "구체적인 피드백",
+                                    "isCorrect": true/false
+                                }
+                                
+                                채점 기준:
+                                - 완전히 정확한 답: 만점
+                                - 부분적으로 맞는 답: 부분 점수
+                                - 틀린 답: 0점`
+                            },
+                            {
+                                role: 'user',
+                                content: `문제: ${question.question}
+                                모범답안 참고: ${question.explanation}
+                                학생 답안: ${userAnswer}`
+                            }
+                        ],
+                        temperature: 0.3
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API 요청 실패');
+                }
+
+                const data = await response.json();
+                const aiResponse = JSON.parse(data.choices[0].message.content);
+                
+                return {
+                    isCorrect: aiResponse.score === question.score,
+                    score: aiResponse.score,
+                    maxScore: question.score,
+                    userAnswer,
+                    explanation: question.explanation,
+                    feedback: aiResponse.feedback
+                };
+            } catch (error) {
+                console.error('AI 채점 오류:', error);
+                return {
+                    isCorrect: false,
+                    score: 0,
+                    maxScore: question.score,
+                    userAnswer,
+                    explanation: question.explanation,
+                    feedback: "AI 채점 중 오류가 발생했습니다. API 키를 확인해주세요."
+                };
+            }
+        }
+
+        function showResults(results) {
+            document.getElementById('examContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.remove('hidden');
+            
+            let totalScore = 0;
+            let maxTotalScore = 0;
+            
+            // 점수 계산
+            for (const result of Object.values(results)) {
+                totalScore += result.score;
+                maxTotalScore += result.maxScore;
+            }
+            
+            // 점수 표시
+            const percentage = Math.round((totalScore / maxTotalScore) * 100);
+            document.getElementById('finalScore').textContent = `${totalScore}/${maxTotalScore}점 (${percentage}%)`;
+            
+            let scoreDescription = '';
+            if (percentage >= 90) {
+                scoreDescription = '🎉 훌륭합니다! 매우 우수한 성적입니다.';
+            } else if (percentage >= 80) {
+                scoreDescription = '👏 잘했습니다! 좋은 성적입니다.';
+            } else if (percentage >= 70) {
+                scoreDescription = '👍 괜찮습니다! 조금만 더 노력하면 됩니다.';
+            } else if (percentage >= 60) {
+                scoreDescription = '📚 더 공부가 필요합니다.';
+            } else {
+                scoreDescription = '💪 포기하지 말고 다시 도전해보세요!';
+            }
+            document.getElementById('scoreDescription').textContent = scoreDescription;
+            
+            // 답안 검토 표시
+            const reviewsContainer = document.getElementById('answerReviews');
+            reviewsContainer.innerHTML = '';
+            
+            let questionNumber = 1;
+            
+            currentExam.questions.forEach((question) => {
+                if (question.type === 'compound') {
+                    const compoundDiv = document.createElement('div');
+                    compoundDiv.innerHTML = `<h3>${question.question}</h3>`;
+                    
+                    question.sub_questions.forEach((subQ, subIndex) => {
+                        const questionId = `${question.id}-${subIndex}`;
+                        const result = results[questionId];
+                        
+                        const reviewDiv = createAnswerReview(subQ, result, questionNumber);
+                        compoundDiv.appendChild(reviewDiv);
+                        questionNumber++;
+                    });
+                    
+                    reviewsContainer.appendChild(compoundDiv);
+                } else {
+                    const result = results[question.id];
+                    const reviewDiv = createAnswerReview(question, result, questionNumber);
+                    reviewsContainer.appendChild(reviewDiv);
+                    questionNumber++;
+                }
+            });
+            
+            setTimeout(renderMath, 100);
+        }
+
+        function createAnswerReview(question, result, questionNumber) {
+            const reviewDiv = document.createElement('div');
+            
+            let statusClass = 'incorrect';
+            let statusText = '틀림';
+            
+            if (result.isCorrect) {
+                statusClass = 'correct';
+                statusText = '정답';
+            } else if (result.score > 0) {
+                statusClass = 'partial';
+                statusText = '부분 정답';
+            }
+            
+            reviewDiv.className = `answer-review ${statusClass}`;
+            
+            let userAnswerText = '';
+            if (question.type === 'multiple_choice') {
+                const selectedOptions = (result.userAnswer || []).map(index => question.options[index]);
+                userAnswerText = selectedOptions.length > 0 ? selectedOptions.join(', ') : '선택하지 않음';
+            } else if (question.type === 'single_choice') {
+                userAnswerText = result.userAnswer !== null ? question.options[result.userAnswer] : '선택하지 않음';
+            } else if (question.type === 'true_false') {
+                userAnswerText = result.userAnswer === 'true' ? '참' : result.userAnswer === 'false' ? '거짓' : '선택하지 않음';
+            } else {
+                userAnswerText = result.userAnswer || '답안 없음';
+            }
+            
+            let correctAnswerText = '';
+            if (question.type === 'multiple_choice') {
+                correctAnswerText = question.correct_answers.map(index => question.options[index]).join(', ');
+            } else if (question.type === 'single_choice') {
+                correctAnswerText = question.options[question.correct_answer];
+            } else if (question.type === 'true_false') {
+                correctAnswerText = question.correct_answer ? '참' : '거짓';
+            } else if (question.type === 'short_answer') {
+                correctAnswerText = question.correct_answer;
+            } else {
+                correctAnswerText = '주관식 문제';
+            }
+            
+            reviewDiv.innerHTML = `
+                <div class="status-badge ${statusClass}">${statusText} (${result.score}/${result.maxScore}점)</div>
+                <h4>문제 ${questionNumber}: ${question.question}</h4>
+                <p><strong>내 답안:</strong> ${userAnswerText}</p>
+                ${question.type !== 'essay' ? `<p><strong>정답:</strong> ${correctAnswerText}</p>` : ''}
+                ${result.feedback ? `<p><strong>AI 피드백:</strong> ${result.feedback}</p>` : ''}
+                <div class="explanation">
+                    <strong>해설:</strong> ${result.explanation}
+                </div>
+            `;
+            
+            return reviewDiv;
+        }
+
+        function resetExam() {
+            currentExam = null;
+            userAnswers = {};
+            
+            document.getElementById('examSelector').classList.remove('hidden');
+            document.getElementById('examContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
