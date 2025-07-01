@@ -62,3 +62,4 @@ authentication-*
 *.backup
 *-broken.*
 *-old.*
+.env*.local
