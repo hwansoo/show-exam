@@ -536,6 +536,7 @@
         let isGloballyAuthenticated = false;
         let authToken = null; // API 인증 토큰
         let shuffledOptionsMap = {}; // 섞인 선택지의 매핑을 저장
+        let currentRoute = null; // 현재 라우트 정보 저장
         
         // 토큰 저장 및 로드 함수
         function saveAuthToken(token) {
@@ -584,6 +585,9 @@
                     // UI 전환
                     document.getElementById('globalPasswordSection').classList.add('hidden');
                     document.getElementById('mainServiceContainer').classList.remove('hidden');
+                    
+                    // 라우팅 초기화 (UI 전환 후)
+                    initializeRouting();
                     
                     // 비밀번호 입력창 초기화
                     document.getElementById('globalPasswordInput').value = '';
@@ -873,6 +877,309 @@
             };
         }
 
+        // 라우팅 시스템
+        function initializeRouting() {
+            // 페이지 로드 시 URL 확인
+            handleRouteChange();
+            
+            // 브라우저 뒤로가기/앞으로가기 처리
+            window.addEventListener('popstate', handleRouteChange);
+        }
+
+        function handleRouteChange() {
+            const path = window.location.pathname;
+            const hash = window.location.hash;
+            
+            // URL 패턴: /problem/{problemSetKey}/{questionId}
+            const problemMatch = path.match(/^\/problem\/([^\/]+)\/(\d+)$/);
+            
+            if (problemMatch) {
+                const [, problemSetKey, questionId] = problemMatch;
+                currentRoute = {
+                    type: 'problem',
+                    problemSetKey,
+                    questionId: parseInt(questionId)
+                };
+                
+                // 인증된 상태에서만 문제 표시
+                if (isGloballyAuthenticated) {
+                    showSpecificProblem(problemSetKey, parseInt(questionId));
+                }
+            } else if (hash.startsWith('#/problem/')) {
+                // Hash 기반 라우팅 지원 (fallback)
+                const hashMatch = hash.match(/^#\/problem\/([^\/]+)\/(\d+)$/);
+                if (hashMatch) {
+                    const [, problemSetKey, questionId] = hashMatch;
+                    currentRoute = {
+                        type: 'problem',
+                        problemSetKey,
+                        questionId: parseInt(questionId)
+                    };
+                    
+                    if (isGloballyAuthenticated) {
+                        showSpecificProblem(problemSetKey, parseInt(questionId));
+                    }
+                }
+            } else {
+                // URL 패턴: /exam/{problemSetKey}
+                const examMatch = path.match(/^\/exam\/([^\/]+)$/);
+                
+                if (examMatch) {
+                    const [, problemSetKey] = examMatch;
+                    currentRoute = {
+                        type: 'exam',
+                        problemSetKey
+                    };
+                    
+                    // 인증된 상태에서만 시험 시작
+                    if (isGloballyAuthenticated) {
+                        startExam(problemSetKey);
+                    }
+                } else {
+                    currentRoute = { type: 'home' };
+                    if (isGloballyAuthenticated) {
+                        showHome();
+                    }
+                }
+            }
+        }
+
+        function navigateToProblem(problemSetKey, questionId) {
+            const url = `/problem/${problemSetKey}/${questionId}`;
+            history.pushState(null, '', url);
+            currentRoute = {
+                type: 'problem',
+                problemSetKey,
+                questionId
+            };
+            showSpecificProblem(problemSetKey, questionId);
+        }
+
+        function navigateToHome() {
+            history.pushState(null, '', '/');
+            currentRoute = { type: 'home' };
+            showHome();
+        }
+
+        function showHome() {
+            document.getElementById('examSelector').classList.remove('hidden');
+            document.getElementById('examContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('singleProblemContainer').classList.add('hidden');
+            const problemListContainer = document.getElementById('problemListContainer');
+            if (problemListContainer) {
+                problemListContainer.classList.add('hidden');
+            }
+        }
+
+        async function showSpecificProblem(problemSetKey, questionId) {
+            // 문제집 로드
+            if (!examData[problemSetKey]) {
+                await loadProblemSet(problemSetKey);
+            }
+            
+            const problemSet = examData[problemSetKey];
+            if (!problemSet) {
+                alert('문제집을 찾을 수 없습니다.');
+                navigateToHome();
+                return;
+            }
+
+            // 문제 찾기
+            let targetQuestion = null;
+            let questionNumber = 1;
+            
+            for (const question of problemSet.questions) {
+                if (question.type === 'compound') {
+                    for (let subIndex = 0; subIndex < question.sub_questions.length; subIndex++) {
+                        if (question.id === questionId && subIndex === 0) {
+                            // 복합 문제의 경우 전체 문제 표시
+                            targetQuestion = question;
+                            break;
+                        }
+                        questionNumber++;
+                    }
+                } else {
+                    if (question.id === questionId) {
+                        targetQuestion = question;
+                        break;
+                    }
+                    questionNumber++;
+                }
+                if (targetQuestion) break;
+            }
+
+            if (!targetQuestion) {
+                alert('문제를 찾을 수 없습니다.');
+                navigateToHome();
+                return;
+            }
+
+            // 단일 문제 표시
+            renderSingleProblemView(problemSet, targetQuestion, questionNumber);
+        }
+
+        function renderSingleProblemView(problemSet, question, questionNumber) {
+            // 기존 화면 숨기기
+            document.getElementById('examSelector').classList.add('hidden');
+            document.getElementById('examContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            
+            // 단일 문제 컨테이너 표시
+            let singleContainer = document.getElementById('singleProblemContainer');
+            if (!singleContainer) {
+                singleContainer = document.createElement('div');
+                singleContainer.id = 'singleProblemContainer';
+                singleContainer.className = 'card hidden';
+                document.querySelector('.container').appendChild(singleContainer);
+            }
+            
+            singleContainer.classList.remove('hidden');
+            
+            // 헤더 생성
+            const header = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2>${problemSet.title}</h2>
+                        <p>문제 ${questionNumber}</p>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="navigateToHome()" style="background: #718096;">목록으로</button>
+                        <button class="btn" onclick="startExam('${currentRoute.problemSetKey}')" style="background: #38a169;">전체 시험</button>
+                    </div>
+                </div>
+            `;
+            
+            // 문제 렌더링
+            let questionHtml = '';
+            if (question.type === 'compound') {
+                questionHtml = `
+                    <div class="question-container">
+                        <div class="question-header">
+                            <span class="question-number">${questionNumber}</span>
+                            <span class="question-score">${question.score}점</span>
+                        </div>
+                        <div class="question-text">${question.question}</div>
+                        <div class="sub-questions">
+                            ${question.sub_questions.map((subQ, subIndex) => {
+                                const subQuestionHtml = renderSubQuestion(subQ, `${question.id}-${subIndex}`, questionNumber + subIndex);
+                                return `<div class="sub-question">${subQuestionHtml}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                questionHtml = `
+                    <div class="question-container">
+                        ${renderSingleQuestion(question, questionNumber)}
+                    </div>
+                `;
+            }
+            
+            singleContainer.innerHTML = `
+                ${header}
+                ${questionHtml}
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn" onclick="submitSingleProblem()">답안 확인</button>
+                </div>
+                <div id="singleProblemResult" class="hidden" style="margin-top: 30px;"></div>
+            `;
+            
+            setTimeout(renderMath, 100);
+        }
+
+        async function submitSingleProblem() {
+            const question = getCurrentQuestion();
+            if (!question) return;
+            
+            // 답안 수집
+            let userAnswer;
+            const questionId = question.type === 'compound' ? `${question.id}-0` : question.id;
+            
+            if (question.type === 'compound') {
+                // 복합 문제의 경우 모든 하위 문제 답안 수집
+                const subAnswers = {};
+                question.sub_questions.forEach((subQ, subIndex) => {
+                    const subQuestionId = `${question.id}-${subIndex}`;
+                    subAnswers[subQuestionId] = collectSingleAnswer(subQ, subQuestionId);
+                });
+                userAnswer = subAnswers;
+            } else {
+                userAnswer = collectSingleAnswer(question, questionId);
+            }
+            
+            // 채점 수행
+            let results = {};
+            if (question.type === 'compound') {
+                for (let subIndex = 0; subIndex < question.sub_questions.length; subIndex++) {
+                    const subQ = question.sub_questions[subIndex];
+                    const subQuestionId = `${question.id}-${subIndex}`;
+                    const subAnswer = userAnswer[subQuestionId];
+                    
+                    if (subQ.type === 'essay') {
+                        results[subQuestionId] = await gradeEssayWithAPI(subQ, subAnswer);
+                    } else {
+                        results[subQuestionId] = gradeObjectiveQuestion(subQ, subAnswer);
+                    }
+                }
+            } else {
+                if (question.type === 'essay') {
+                    results[questionId] = await gradeEssayWithAPI(question, userAnswer);
+                } else {
+                    results[questionId] = gradeObjectiveQuestion(question, userAnswer);
+                }
+            }
+            
+            // 결과 표시
+            showSingleProblemResult(question, results);
+        }
+
+        function getCurrentQuestion() {
+            if (!currentRoute || !currentRoute.problemSetKey || !currentRoute.questionId) return null;
+            
+            const problemSet = examData[currentRoute.problemSetKey];
+            if (!problemSet) return null;
+            
+            return problemSet.questions.find(q => q.id === currentRoute.questionId);
+        }
+
+        function showSingleProblemResult(question, results) {
+            const resultContainer = document.getElementById('singleProblemResult');
+            resultContainer.classList.remove('hidden');
+            
+            let totalScore = 0;
+            let maxTotalScore = 0;
+            
+            // 점수 계산
+            for (const result of Object.values(results)) {
+                totalScore += result.score;
+                maxTotalScore += result.maxScore;
+            }
+            
+            // 결과 HTML 생성
+            let resultHtml = `
+                <div class="score-display">
+                    <h3>결과: ${totalScore}/${maxTotalScore}점</h3>
+                </div>
+            `;
+            
+            if (question.type === 'compound') {
+                question.sub_questions.forEach((subQ, subIndex) => {
+                    const questionId = `${question.id}-${subIndex}`;
+                    const result = results[questionId];
+                    const reviewDiv = createAnswerReview(subQ, result, subIndex + 1);
+                    resultHtml += reviewDiv.outerHTML;
+                });
+            } else {
+                const result = results[question.id];
+                const reviewDiv = createAnswerReview(question, result, 1);
+                resultHtml += reviewDiv.outerHTML;
+            }
+            
+            resultContainer.innerHTML = resultHtml;
+            setTimeout(renderMath, 100);
+        }
+
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             // 저장된 토큰이 있는지 확인
@@ -885,6 +1192,7 @@
                         // 토큰이 유효하면 메인 서비스 로드
                         isGloballyAuthenticated = true;
                         await initializeMainService();
+                        initializeRouting(); // 라우팅 초기화
                         document.getElementById('globalPasswordSection').classList.add('hidden');
                         document.getElementById('mainServiceContainer').classList.remove('hidden');
                         return; // 인증 성공 시 여기서 종료
@@ -1211,10 +1519,21 @@
                 examCard.className = 'exam-card';
                 examCard.onclick = () => startExam(key);
                 
+                // 문제 개수 계산
+                let questionCount = 0;
+                if (examData[key]) {
+                    questionCount = getTotalQuestionCount(examData[key].questions);
+                }
+                
                 examCard.innerHTML = `
                     <h3>${problemSetInfo.title}</h3>
                     <p>${problemSetInfo.description}</p>
                     <p><strong>카테고리:</strong> ${problemSetInfo.category || 'general'}</p>
+                    ${questionCount > 0 ? `<p><strong>문제 수:</strong> ${questionCount}개</p>` : ''}
+                    <div style="margin-top: 15px; text-align: right;">
+                        <button onclick="showProblemList('${key}')" style="background: #4299e1; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem; margin-right: 8px;">📋 문제 목록</button>
+                        <button onclick="copyProblemSetUrl('${key}'); event.stopPropagation();" style="background: #38a169; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 0.85rem;">🔗 URL 복사</button>
+                    </div>
                 `;
                 
                 examGrid.appendChild(examCard);
@@ -1231,6 +1550,28 @@
                 }
             });
             return count;
+        }
+
+        function copyProblemSetUrl(problemSetKey) {
+            const baseUrl = window.location.origin;
+            const problemSetUrl = `${baseUrl}/exam/${problemSetKey}`;
+            
+            navigator.clipboard.writeText(problemSetUrl).then(() => {
+                // 성공 메시지 표시
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ 복사됨';
+                button.style.background = '#38a169';
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '#38a169';
+                }, 2000);
+            }).catch(err => {
+                console.error('URL 복사 실패:', err);
+                // 폴백: alert으로 URL 표시
+                alert(`문제집 URL:\n${problemSetUrl}`);
+            });
         }
 
         async function startExam(examKey) {
@@ -1511,7 +1852,7 @@
                         const userAnswer = userAnswers[questionId];
                         
                         if (subQ.type === 'essay') {
-                            results[questionId] = await gradeEssayQuestion(subQ, userAnswer);
+                            results[questionId] = await gradeEssayWithAPI(subQ, userAnswer);
                         } else {
                             results[questionId] = gradeObjectiveQuestion(subQ, userAnswer);
                         }
@@ -1521,7 +1862,7 @@
                     const userAnswer = userAnswers[questionId];
                     
                     if (question.type === 'essay') {
-                        results[questionId] = await gradeEssayQuestion(question, userAnswer);
+                        results[questionId] = await gradeEssayWithAPI(question, userAnswer);
                     } else {
                         results[questionId] = gradeObjectiveQuestion(question, userAnswer);
                     }
@@ -1859,6 +2200,18 @@
                         const result = results[questionId];
                         
                         const reviewDiv = createAnswerReview(subQ, result, questionNumber);
+                        
+                        // 개별 문제 링크 추가
+                        const linkDiv = document.createElement('div');
+                        linkDiv.style.cssText = 'margin: 10px 0; text-align: right;';
+                        linkDiv.innerHTML = `
+                            <button class="btn" onclick="navigateToProblem('${currentExam.key || Object.keys(examData).find(key => examData[key] === currentExam)}', ${question.id})" 
+                                    style="background: #4299e1; font-size: 0.8rem; padding: 5px 10px;">
+                                🔗 이 문제만 보기
+                            </button>
+                        `;
+                        reviewDiv.appendChild(linkDiv);
+                        
                         compoundDiv.appendChild(reviewDiv);
                         questionNumber++;
                     });
@@ -1867,6 +2220,18 @@
                 } else {
                     const result = results[question.id];
                     const reviewDiv = createAnswerReview(question, result, questionNumber);
+                    
+                    // 개별 문제 링크 추가
+                    const linkDiv = document.createElement('div');
+                    linkDiv.style.cssText = 'margin: 10px 0; text-align: right;';
+                    linkDiv.innerHTML = `
+                        <button class="btn" onclick="navigateToProblem('${currentExam.key || Object.keys(examData).find(key => examData[key] === currentExam)}', ${question.id})" 
+                                style="background: #4299e1; font-size: 0.8rem; padding: 5px 10px;">
+                            🔗 이 문제만 보기
+                        </button>
+                    `;
+                    reviewDiv.appendChild(linkDiv);
+                    
                     reviewsContainer.appendChild(reviewDiv);
                     questionNumber++;
                 }
@@ -1960,6 +2325,111 @@
             return reviewDiv;
         }
 
+        async function showProblemList(problemSetKey) {
+            // 문제집 로드
+            if (!examData[problemSetKey]) {
+                await loadProblemSet(problemSetKey);
+            }
+            
+            const problemSet = examData[problemSetKey];
+            if (!problemSet) {
+                alert('문제집을 찾을 수 없습니다.');
+                return;
+            }
+
+            // 기존 화면 숨기기
+            document.getElementById('examSelector').classList.add('hidden');
+            document.getElementById('examContainer').classList.add('hidden');
+            document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('singleProblemContainer').classList.add('hidden');
+            
+            // 문제 목록 컨테이너 생성 또는 표시
+            let listContainer = document.getElementById('problemListContainer');
+            if (!listContainer) {
+                listContainer = document.createElement('div');
+                listContainer.id = 'problemListContainer';
+                listContainer.className = 'card hidden';
+                document.querySelector('.container').appendChild(listContainer);
+            }
+            
+            listContainer.classList.remove('hidden');
+            
+            // 헤더 생성
+            const header = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2>${problemSet.title} - 문제 목록</h2>
+                        <p>${problemSet.description}</p>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="navigateToHome()" style="background: #718096;">목록으로</button>
+                        <button class="btn" onclick="startExam('${problemSetKey}')" style="background: #38a169;">전체 시험 시작</button>
+                    </div>
+                </div>
+            `;
+            
+            // 문제 목록 생성
+            let problemListHtml = '';
+            let questionNumber = 1;
+            
+            problemSet.questions.forEach((question) => {
+                if (question.type === 'compound') {
+                    problemListHtml += `
+                        <div class="question-container" style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <h4>문제 ${questionNumber}: ${question.question.substring(0, 100)}${question.question.length > 100 ? '...' : ''}</h4>
+                                    <p style="color: #718096; margin: 5px 0;">복합 문제 (${question.sub_questions.length}개 하위 문제) | ${question.score}점</p>
+                                </div>
+                                <div>
+                                    <button class="btn" onclick="navigateToProblem('${problemSetKey}', ${question.id})" 
+                                            style="background: #4299e1; font-size: 0.9rem; padding: 8px 16px;">
+                                        📝 풀어보기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    questionNumber += question.sub_questions.length;
+                } else {
+                    const typeText = {
+                        'single_choice': '객관식(단일선택)',
+                        'multiple_choice': '객관식(다중선택)', 
+                        'true_false': 'O/X',
+                        'short_answer': '단답형',
+                        'essay': '서술형'
+                    }[question.type] || question.type;
+                    
+                    problemListHtml += `
+                        <div class="question-container" style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <h4>문제 ${questionNumber}: ${question.question.substring(0, 100)}${question.question.length > 100 ? '...' : ''}</h4>
+                                    <p style="color: #718096; margin: 5px 0;">${typeText} | ${question.score}점</p>
+                                </div>
+                                <div>
+                                    <button class="btn" onclick="navigateToProblem('${problemSetKey}', ${question.id})" 
+                                            style="background: #4299e1; font-size: 0.9rem; padding: 8px 16px;">
+                                        📝 풀어보기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    questionNumber++;
+                }
+            });
+            
+            listContainer.innerHTML = `
+                ${header}
+                <div style="border-top: 2px solid #e2e8f0; padding-top: 20px;">
+                    ${problemListHtml}
+                </div>
+            `;
+            
+            setTimeout(renderMath, 100);
+        }
+
         function resetExam() {
             currentExam = null;
             userAnswers = {};
@@ -1968,6 +2438,8 @@
             document.getElementById('examSelector').classList.remove('hidden');
             document.getElementById('examContainer').classList.add('hidden');
             document.getElementById('resultsContainer').classList.add('hidden');
+            document.getElementById('singleProblemContainer').classList.add('hidden');
+            document.getElementById('problemListContainer').classList.add('hidden');
         }
     </script>
 </body>
