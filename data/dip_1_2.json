@@ -1,0 +1,329 @@
+{
+  "title": "디지털 영상처리 1-2장 개념 이해 문제",
+  "description": "Lecture 1 (Introduction) 및 Lecture 2 (Image Fundamentals) 기반으로 구성된 디지털 영상처리 시험 대비 연습문제 30문제입니다.",
+  "questions": [
+    {
+      "id": 1,
+      "type": "single_choice",
+      "question": "디지털 영상처리의 고수준(high-level) 단계에서 수행하는 작업으로 올바른 것은 무엇입니까?",
+      "options": [
+        "노이즈 제거",
+        "엣지 검출",
+        "영상 이해",
+        "영상 보강"
+      ],
+      "correct_answer": 2,
+      "score": 1,
+      "explanation": "고수준 단계에서는 이미지 이해(컴퓨터 비전) 단계로, 영상의 의미를 해석하는 단계입니다."
+    },
+    {
+      "id": 2,
+      "type": "single_choice",
+      "question": "아날로그 이미지와 디지털 이미지의 차이에 대한 설명으로 옳은 것은?",
+      "options": [
+        "디지털 이미지는 연속적인 값으로 표현된다.",
+        "디지털 이미지는 이산적인 값으로 표현된다.",
+        "아날로그 이미지는 이산적인 값으로 표현된다.",
+        "디지털 이미지는 샘플링이 필요 없다."
+      ],
+      "correct_answer": 1,
+      "score": 1,
+      "explanation": "디지털 이미지는 공간적으로 샘플링하여 이산적인 픽셀 값으로 표현됩니다."
+    },
+    {
+      "id": 3,
+      "type": "true_false",
+      "question": "디지털 이미지 처리는 X-ray 및 CT 데이터에도 적용될 수 있다.",
+      "correct_answer": true,
+      "score": 1,
+      "explanation": "영상처리는 X-ray, CT, Radar, Electron Microscopy 등 다양한 영상 모달리티에 적용 가능합니다."
+    },
+    {
+      "id": 4,
+      "type": "short_answer",
+      "question": "디지털 이미지의 가장 작은 단위를 무엇이라고 부릅니까?",
+      "correct_answer": "픽셀",
+      "score": 1,
+      "explanation": "픽셀(Pixel)은 Digital Image의 가장 작은 단위로, 각각의 위치에 대응하는 이산 값입니다."
+    },
+    {
+      "id": 5,
+      "type": "short_answer",
+      "question": "디지털 영상처리의 중수준(Mid-level) 단계에서는 영상을 어떤 것으로 변환합니까?",
+      "correct_answer": "특징",
+      "score": 1,
+      "explanation": "중수준 단계에서는 영상에서 경계, 라인, 영역 등 특징(feature)으로 변환하여 정보를 추출합니다."
+    },
+    {
+      "id": 6,
+      "type": "single_choice",
+      "question": "영상의 샘플링과 관련하여 적절한 조건은 무엇입니까?",
+      "options": [
+        "언제나 임의의 샘플링 주파수를 사용 가능하다.",
+        "샘플링 주파수는 신호의 최대 주파수의 두 배 이상이어야 한다.",
+        "샘플링 주파수는 신호의 최대 주파수의 절반 이하이어야 한다.",
+        "샘플링과 퀀타이제이션은 동일한 과정이다."
+      ],
+      "correct_answer": 1,
+      "score": 1,
+      "explanation": "샘플링 이론(Nyquist 기준)에 따르면 최대 주파수의 두 배 이상으로 샘플링해야 정확한 재구성이 가능합니다."
+    },
+    {
+      "id": 7,
+      "type": "true_false",
+      "question": "히스토그램 평활화는 이미지의 명암 분포를 균일하게 만들기 위한 방법이다.",
+      "correct_answer": true,
+      "score": 1,
+      "explanation": "히스토그램 평활화는 이미지의 대비를 향상시키기 위해 명암 분포를 균등하게 분산시키는 기법입니다."
+    },
+    {
+      "id": 8,
+      "type": "single_choice",
+      "question": "영상의 감마 보정은 무엇을 해결하기 위한 과정입니까?",
+      "options": [
+        "해상도 부족",
+        "주파수 왜곡",
+        "디스플레이의 비선형 출력",
+        "컬러 변환"
+      ],
+      "correct_answer": 2,
+      "score": 1,
+      "explanation": "감마 보정은 디스플레이 장치의 비선형적인 출력과 입력 간 관계를 보정하는 과정입니다."
+    },
+    {
+      "id": 9,
+      "type": "true_false",
+      "question": "샘플링과 퀀타이제이션은 동일한 의미를 가진다.",
+      "correct_answer": false,
+      "score": 1,
+      "explanation": "샘플링은 공간의 이산화, 퀀타이제이션은 값의 이산화로 서로 다른 과정입니다."
+    },
+    {
+      "id": 10,
+      "type": "short_answer",
+      "question": "히스토그램 평활화에서 사용하는 누적 밀도 함수의 약어는 무엇입니까?",
+      "correct_answer": "CDF",
+      "score": 1,
+      "explanation": "누적 밀도 함수(Cumulative Density Function, CDF)를 사용하여 픽셀 값의 변환 테이블을 만듭니다."
+    },
+    {
+      "id": 11,
+      "type": "single_choice",
+      "question": "다음 중 디지털 영상처리의 저수준 단계에서 수행되는 작업은 무엇입니까?",
+      "options": [
+        "영상 이해",
+        "엣지 검출",
+        "객체 인식",
+        "의미 해석"
+      ],
+      "correct_answer": 1,
+      "score": 1,
+      "explanation": "저수준 단계는 영상 노이즈 제거, 엣지 검출, 샤프닝 등의 영상 개선 및 전처리 작업을 포함합니다."
+    },
+    {
+      "id": 12,
+      "type": "multiple_choice",
+      "question": "다음 중 디지털 영상처리의 주요 카테고리에 포함되는 것을 모두 고르세요.",
+      "options": [
+        "영상 획득",
+        "영상 압축",
+        "영상 복원",
+        "영상 세분화",
+        "영상 이해",
+        "오디오 처리"
+      ],
+      "correct_answers": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "score": 1,
+      "explanation": "디지털 영상처리의 주요 카테고리는 영상 획득, 보강, 복원, 재구성, 압축, 세분화, 이해 등이 포함됩니다."
+    },
+    {
+      "id": 13,
+      "type": "true_false",
+      "question": "영상의 히스토그램은 픽셀의 공간적 분포를 나타낸다.",
+      "correct_answer": false,
+      "score": 1,
+      "explanation": "히스토그램은 픽셀 값의 빈도를 나타내며, 공간적 분포가 아닌 밝기 분포를 보여줍니다."
+    },
+    {
+      "id": 14,
+      "type": "short_answer",
+      "question": "픽셀 값이 0~255로 표현되는 이유는 몇 비트 표현을 사용하기 때문인가요?",
+      "correct_answer": "8",
+      "score": 1,
+      "explanation": "8비트 표현을 사용하면 $2^8 = 256$ 단계로 표현되며, 0~255 범위의 픽셀 값을 사용합니다."
+    },
+    {
+      "id": 15,
+      "type": "single_choice",
+      "question": "샘플링 이론에서 신호의 최대 주파수가 10 kHz일 때 최소 샘플링 주파수는 얼마입니까?",
+      "options": [
+        "5 kHz",
+        "10 kHz",
+        "20 kHz",
+        "40 kHz"
+      ],
+      "correct_answer": 2,
+      "score": 1,
+      "explanation": "최대 주파수의 두 배 이상인 20 kHz로 샘플링해야 원본 신호를 재구성할 수 있습니다."
+    },
+    {
+      "id": 16,
+      "type": "true_false",
+      "question": "영상의 해상도를 높이기 위해서는 보간법이 사용된다.",
+      "correct_answer": true,
+      "score": 1,
+      "explanation": "해상도 증가(업샘플링) 시 bilinear, bicubic interpolation 등의 보간법을 사용합니다."
+    },
+    {
+      "id": 17,
+      "type": "short_answer",
+      "question": "영상의 크기를 변경할 때 가장 간단한 보간법의 이름은 무엇입니까?",
+      "correct_answer": "Nearest neighbor",
+      "score": 1,
+      "explanation": "가장 간단한 보간법은 Nearest neighbor로, 가장 가까운 이웃 픽셀 값을 그대로 사용하는 방식입니다."
+    },
+    {
+      "id": 18,
+      "type": "essay",
+      "question": "디지털 이미지와 아날로그 이미지의 차이를 설명하고 디지털 영상처리의 3단계(저, 중, 고수준 처리)에 대해 각각 설명하세요.",
+      "score": 1,
+      "explanation": "모범 답안: 디지털 이미지는 이산적인 픽셀 값으로 표현되며, 샘플링 및 퀀타이제이션 과정을 거친다. 저수준: 노이즈 제거 및 개선, 중수준: 특징 추출, 고수준: 이미지 이해/분석."
+    },
+    {
+      "id": 19,
+      "type": "single_choice",
+      "question": "다음 중 영상의 샘플링 주파수와 가장 관련이 깊은 이론은 무엇입니까?",
+      "options": [
+        "Fourier Transform",
+        "Nyquist Theorem",
+        "Convolution Theorem",
+        "Sampling Law"
+      ],
+      "correct_answer": 1,
+      "score": 1,
+      "explanation": "샘플링 주파수는 Nyquist Theorem과 관련되어 있으며, 최대 주파수의 두 배 이상 샘플링해야 함을 알려줍니다."
+    },
+    {
+      "id": 20,
+      "type": "single_choice",
+      "question": "디지털 영상의 해상도를 높이기 위해 사용되는 보간법 중 가장 복잡한 것은 무엇입니까?",
+      "options": [
+        "Nearest neighbor",
+        "Bilinear",
+        "Bicubic",
+        "Biquartic"
+      ],
+      "correct_answer": 2,
+      "score": 1,
+      "explanation": "Bicubic interpolation은 주변 16픽셀을 고려하여 계산하며 가장 복잡합니다."
+    },
+    {
+      "id": 21,
+      "type": "true_false",
+      "question": "감마 보정은 이미지의 노이즈를 제거하기 위한 과정이다.",
+      "correct_answer": false,
+      "score": 1,
+      "explanation": "감마 보정은 디스플레이의 비선형 출력을 보정하는 과정으로, 노이즈 제거와는 관련이 없습니다."
+    },
+    {
+      "id": 22,
+      "type": "short_answer",
+      "question": "히스토그램 평활화는 이미지의 어떤 특성을 개선합니까?",
+      "correct_answer": "대비",
+      "score": 1,
+      "explanation": "히스토그램 평활화는 이미지의 contrast(대비)를 개선하는 기법입니다."
+    },
+    {
+      "id": 23,
+      "type": "single_choice",
+      "question": "다음 중 저수준 처리에 속하지 않는 것은 무엇입니까?",
+      "options": [
+        "샤프닝",
+        "노이즈 제거",
+        "엣지 검출",
+        "객체 인식"
+      ],
+      "correct_answer": 3,
+      "score": 1,
+      "explanation": "객체 인식은 고수준 처리 단계에 속합니다."
+    },
+    {
+      "id": 24,
+      "type": "multiple_choice",
+      "question": "다음 중 디지털 이미지의 크기 조절에 사용되는 보간법을 모두 고르세요.",
+      "options": [
+        "Nearest neighbor",
+        "Bilinear",
+        "Bicubic",
+        "FFT",
+        "Convolution"
+      ],
+      "correct_answers": [
+        0,
+        1,
+        2
+      ],
+      "score": 1,
+      "explanation": "크기 조절(업샘플링/다운샘플링) 시 Nearest neighbor, Bilinear, Bicubic 보간법을 사용합니다."
+    },
+    {
+      "id": 25,
+      "type": "true_false",
+      "question": "샘플링 주파수가 부족하면 에일리어싱(Aliasing) 현상이 발생할 수 있다.",
+      "correct_answer": true,
+      "score": 1,
+      "explanation": "샘플링 주파수가 부족할 경우 높은 주파수 성분이 잘못 해석되어 aliasing이 발생합니다."
+    },
+    {
+      "id": 26,
+      "type": "short_answer",
+      "question": "감마 보정에서 사용하는 전형적인 함수 형태는 무엇입니까?",
+      "correct_answer": "멱 함수",
+      "score": 1,
+      "explanation": "감마 보정은 $f(x) = x^{\\gamma}$ 형태의 멱(power) 함수를 사용합니다."
+    },
+    {
+      "id": 27,
+      "type": "single_choice",
+      "question": "영상의 대비 향상 기법으로 사용되는 방법은 무엇입니까?",
+      "options": [
+        "샘플링",
+        "퀀타이제이션",
+        "히스토그램 평활화",
+        "보간"
+      ],
+      "correct_answer": 2,
+      "score": 1,
+      "explanation": "히스토그램 평활화는 이미지의 contrast(대비)를 향상시키는 데 사용됩니다."
+    },
+    {
+      "id": 28,
+      "type": "true_false",
+      "question": "디지털 이미지는 공간적으로 연속적인 값으로 표현된다.",
+      "correct_answer": false,
+      "score": 1,
+      "explanation": "디지털 이미지는 공간적으로 이산적인 픽셀 배열로 표현됩니다."
+    },
+    {
+      "id": 29,
+      "type": "short_answer",
+      "question": "영상에서 픽셀의 공간적 해상도를 결정하는 것은 무엇입니까?",
+      "correct_answer": "샘플링",
+      "score": 1,
+      "explanation": "샘플링은 픽셀 간격을 결정하며 영상의 공간적 해상도를 결정합니다."
+    },
+    {
+      "id": 30,
+      "type": "essay",
+      "question": "디지털 영상처리의 샘플링, 퀀타이제이션, 감마 보정, 히스토그램 평활화의 목적과 중요성에 대해 설명하세요.",
+      "score": 1,
+      "explanation": "모범 답안: 샘플링은 공간적 이산화를, 퀀타이제이션은 값의 이산화를, 감마 보정은 디스플레이 비선형 보정을, 히스토그램 평활화는 대비 향상을 위해 사용되며, 각각의 과정은 영상처리의 품질을 높이는 데 필수적입니다."
+    }
+  ]
+}
