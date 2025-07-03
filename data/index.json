@@ -44,6 +44,17 @@
       "created_at": "2025-07-03T11:11:38.464Z",
       "updated_at": "2025-07-03T11:11:38.464Z",
       "is_built_in": false
+    },
+    {
+      "key": "dip_l3",
+      "file": "dip_l3.json",
+      "title": "DIP - L3 Geometric Operations",
+      "description": "Lecture 3 Geometric Operations 기반 디지털 영상처리 연습문제 25문제, 배점 각 4점, 기출/모의고사 대비용 문제집입니다.",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-03T11:26:45.505Z",
+      "updated_at": "2025-07-03T11:26:45.505Z",
+      "is_built_in": false
     }
   ]
 }
