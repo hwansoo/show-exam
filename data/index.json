@@ -66,6 +66,17 @@
       "created_at": "2025-07-04T10:36:14.836Z",
       "updated_at": "2025-07-04T10:36:14.836Z",
       "is_built_in": false
+    },
+    {
+      "key": "debug_test_1751625377876",
+      "file": "debug_test_1751625377876.json",
+      "title": "Debug Test",
+      "description": "Debug test description",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T10:36:18.597Z",
+      "updated_at": "2025-07-04T10:36:18.597Z",
+      "is_built_in": false
     }
   ]
 }
