@@ -8,13 +8,16 @@ export interface ProblemSet {
 }
 
 export interface Problem {
-  id: string
+  id: string | number
   question: string
   description?: string
-  type: 'multiple_choice' | 'text'
-  options?: Option[]
+  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'compound' | 'text'
+  options?: string[]
   subQuestions?: SubQuestion[]
   score: number
+  correct_answer?: number | boolean | string
+  correct_answers?: number[]
+  explanation?: string
 }
 
 export interface Option {
@@ -25,8 +28,12 @@ export interface Option {
 export interface SubQuestion {
   id: string
   question: string
-  type: 'multiple_choice' | 'text'
-  options?: Option[]
+  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'text'
+  options?: string[]
+  score?: number
+  correct_answer?: number | boolean | string
+  correct_answers?: number[]
+  explanation?: string
 }
 
 export interface Answer {

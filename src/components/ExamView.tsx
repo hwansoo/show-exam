@@ -11,13 +11,13 @@ interface ExamViewProps {
 
 export default function ExamView({ exam, onGoBack }: ExamViewProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, Answer>>({})
+  const [answers, setAnswers] = useState<Record<string | number, Answer>>({})
   const [showResults, setShowResults] = useState(false)
 
   const questions = exam.problems || []
   const currentQuestion = questions[currentQuestionIndex]
 
-  const handleAnswer = (questionId: string, answer: Answer) => {
+  const handleAnswer = (questionId: string | number, answer: Answer) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: answer
