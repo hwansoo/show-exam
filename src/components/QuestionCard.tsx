@@ -127,7 +127,7 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
           value={textAnswer}
           onChange={(e) => handleTextAnswer(e.target.value)}
           placeholder="답안을 입력하세요..."
-          className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-vertical min-h-[120px]"
+          className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-vertical min-h-[120px] text-gray-900 placeholder-gray-500"
         />
       )}
     </div>

@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure better text visibility on mobile devices */
+input, textarea {
+  color: #1f2937 !important; /* gray-800 */
+  -webkit-text-fill-color: #1f2937 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+  opacity: 1 !important;
+}
+
+/* Fix iOS Safari input styling */
+input[type="text"], 
+input[type="password"], 
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}

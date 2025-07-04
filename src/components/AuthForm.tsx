@@ -67,7 +67,7 @@ export default function AuthForm({ onAuthenticated }: AuthFormProps) {
             onChange={(e) => setPassword(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="접속 비밀번호를 입력하세요"
-            className="w-full p-4 border-2 border-gray-300 rounded-lg text-center focus:border-blue-500 focus:outline-none"
+            className="w-full p-4 border-2 border-gray-300 rounded-lg text-center focus:border-blue-500 focus:outline-none text-gray-900 placeholder-gray-500"
             disabled={loading}
           />
         </div>
