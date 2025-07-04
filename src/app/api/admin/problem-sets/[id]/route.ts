@@ -25,16 +25,29 @@ function verifyAdminToken(request: Request) {
 }
 
 // Load data from JSON file
-function loadData() {
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
+function loadIndexData() {
+  const dataPath = path.join(process.cwd(), 'data', 'index.json')
   const data = fs.readFileSync(dataPath, 'utf8')
   return JSON.parse(data)
 }
 
 // Save data to JSON file
-function saveData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
+function saveIndexData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const dataPath = path.join(process.cwd(), 'data', 'index.json')
   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
+}
+
+// Load problem set data from file
+function loadProblemSetData(filename: string) {
+  const filePath = path.join(process.cwd(), 'data', filename)
+  const data = fs.readFileSync(filePath, 'utf8')
+  return JSON.parse(data)
+}
+
+// Save problem set data to file
+function saveProblemSetData(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const filePath = path.join(process.cwd(), 'data', filename)
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
 }
 
 // PUT - Update problem set
@@ -48,34 +61,51 @@ export async function PUT(
     const resolvedParams = await params
     const setId = resolvedParams.id
     const body = await request.json()
-    const { name, description } = body
+    const { title, description } = body
 
-    if (!name) {
-      return NextResponse.json({ error: '문제 세트 이름이 필요합니다.' }, { status: 400 })
+    if (!title || !description) {
+      return NextResponse.json({ error: '제목과 설명은 필수 입력 항목입니다.' }, { status: 400 })
     }
 
-    const data = loadData()
+    const indexData = loadIndexData()
     
     // Find the problem set
-    const setIndex = data.problem_sets.findIndex((set: any) => set.id.toString() === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
+    const setIndex = indexData.problem_sets.findIndex((set: any) => set.key === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
     if (setIndex === -1) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    // Update the problem set
-    data.problem_sets[setIndex].name = name
-    data.problem_sets[setIndex].description = description || ''
+    const problemSetIndex = indexData.problem_sets[setIndex]
+    
+    // Load the problem set data
+    const problemSetData = loadProblemSetData(problemSetIndex.file)
+    
+    // Update the problem set data
+    problemSetData.title = title
+    problemSetData.description = description
+    
+    // Update the index entry
+    indexData.problem_sets[setIndex].title = title
+    indexData.problem_sets[setIndex].description = description
 
-    saveData(data)
+    // Save both files
+    saveProblemSetData(problemSetIndex.file, problemSetData)
+    saveIndexData(indexData)
 
     return NextResponse.json({ 
       success: true, 
-      problemSet: data.problem_sets[setIndex],
+      problemSet: {
+        id: setId,
+        name: title,
+        description,
+        problems: problemSetData.problems || [],
+        totalScore: (problemSetData.problems || []).reduce((total: number, problem: any) => total + (problem.score || 0), 0) // eslint-disable-line @typescript-eslint/no-explicit-any
+      },
       message: '문제 세트가 성공적으로 수정되었습니다.'
     })
-  } catch {
-    console.error("API error occurred")
-    return NextResponse.json({ error: "Server error occurred" }, { status: 401 })
+  } catch (error) {
+    console.error('Error updating problem set:', error)
+    return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }
 
@@ -89,24 +119,32 @@ export async function DELETE(
     
     const resolvedParams = await params
     const setId = resolvedParams.id
-    const data = loadData()
+    const indexData = loadIndexData()
     
     // Find the problem set
-    const setIndex = data.problem_sets.findIndex((set: any) => set.id.toString() === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
+    const setIndex = indexData.problem_sets.findIndex((set: any) => set.key === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
     if (setIndex === -1) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    // Remove the problem set
-    data.problem_sets.splice(setIndex, 1)
-    saveData(data)
+    const problemSetIndex = indexData.problem_sets[setIndex]
+    
+    // Delete the problem set file
+    const filePath = path.join(process.cwd(), 'data', problemSetIndex.file)
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    // Remove from index
+    indexData.problem_sets.splice(setIndex, 1)
+    saveIndexData(indexData)
 
     return NextResponse.json({ 
       success: true,
       message: '문제 세트가 성공적으로 삭제되었습니다.'
     })
-  } catch {
-    console.error("API error occurred")
-    return NextResponse.json({ error: "Server error occurred" }, { status: 401 })
+  } catch (error) {
+    console.error('Error deleting problem set:', error)
+    return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }

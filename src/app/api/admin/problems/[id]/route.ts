@@ -43,7 +43,7 @@ function verifyAdminToken(request: Request) {
 //   fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
 // }
 
-// PUT - Update problem (placeholder implementation)
+// PUT - Update problem
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -53,20 +53,70 @@ export async function PUT(
     
     const resolvedParams = await params
     const problemId = resolvedParams.id
+    const body = await request.json()
+    const { question, type, options, correct_answer, correct_answers, score, explanation } = body
 
-    // Placeholder - editing functionality to be implemented
+    if (!question || !type || score === undefined) {
+      return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 })
+    }
+
+    const indexData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data', 'index.json'), 'utf-8'))
+    
+    // Find the problem set containing this problem
+    let foundProblemSet = null
+    let problemSetData = null
+    
+    for (const problemSet of indexData.problem_sets) {
+      const filePath = path.join(process.cwd(), 'data', problemSet.file)
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+        const problemIndex = data.problems?.findIndex((p: any) => p.id === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (problemIndex !== -1) {
+          foundProblemSet = problemSet
+          problemSetData = data
+          break
+        }
+      }
+    }
+    
+    if (!foundProblemSet || !problemSetData) {
+      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
+    }
+    
+    // Find and update the problem
+    const problemIndex = problemSetData.problems.findIndex((p: any) => p.id === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (problemIndex === -1) {
+      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
+    }
+    
+    const updatedProblem = {
+      id: problemId,
+      question,
+      type,
+      options: (type === 'single_choice' || type === 'multiple_choice') ? options : undefined,
+      correct_answer,
+      correct_answers: type === 'multiple_choice' ? correct_answers : undefined,
+      score: Number(score),
+      explanation: explanation || undefined
+    }
+    
+    problemSetData.problems[problemIndex] = updatedProblem
+    
+    // Save the updated problem set
+    fs.writeFileSync(path.join(process.cwd(), 'data', foundProblemSet.file), JSON.stringify(problemSetData, null, 2))
+
     return NextResponse.json({ 
-      success: false,
-      message: '문제 수정 기능은 곧 추가될 예정입니다.',
-      problemId
+      success: true,
+      problem: updatedProblem,
+      message: '문제가 성공적으로 수정되었습니다.'
     })
-  } catch {
-    console.error("API error occurred")
-    return NextResponse.json({ error: "Server error occurred" }, { status: 401 })
+  } catch (error) {
+    console.error('Error updating problem:', error)
+    return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }
 
-// DELETE - Delete problem (placeholder implementation)
+// DELETE - Delete problem
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -77,14 +127,46 @@ export async function DELETE(
     const resolvedParams = await params
     const problemId = resolvedParams.id
 
-    // Placeholder - deletion functionality to be implemented
+    const indexData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data', 'index.json'), 'utf-8'))
+    
+    // Find the problem set containing this problem
+    let foundProblemSet = null
+    let problemSetData = null
+    
+    for (const problemSet of indexData.problem_sets) {
+      const filePath = path.join(process.cwd(), 'data', problemSet.file)
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+        const problemIndex = data.problems?.findIndex((p: any) => p.id === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
+        if (problemIndex !== -1) {
+          foundProblemSet = problemSet
+          problemSetData = data
+          break
+        }
+      }
+    }
+    
+    if (!foundProblemSet || !problemSetData) {
+      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
+    }
+    
+    // Find and remove the problem
+    const problemIndex = problemSetData.problems.findIndex((p: any) => p.id === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (problemIndex === -1) {
+      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
+    }
+    
+    problemSetData.problems.splice(problemIndex, 1)
+    
+    // Save the updated problem set
+    fs.writeFileSync(path.join(process.cwd(), 'data', foundProblemSet.file), JSON.stringify(problemSetData, null, 2))
+
     return NextResponse.json({ 
-      success: false,
-      message: '문제 삭제 기능은 곧 추가될 예정입니다.',
-      problemId
+      success: true,
+      message: '문제가 성공적으로 삭제되었습니다.'
     })
-  } catch {
-    console.error("API error occurred")
-    return NextResponse.json({ error: "Server error occurred" }, { status: 401 })
+  } catch (error) {
+    console.error('Error deleting problem:', error)
+    return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }

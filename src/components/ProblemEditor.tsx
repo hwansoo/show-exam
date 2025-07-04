@@ -8,6 +8,7 @@ interface ProblemEditorProps {
   problem: Problem | null
   problemSet: ProblemSet | null
   isCreatingSet: boolean
+  isEditingSet?: boolean
   onSave: () => void
   onCancel: () => void
 }
@@ -16,6 +17,7 @@ export default function ProblemEditor({
   problem, 
   problemSet, 
   isCreatingSet, 
+  isEditingSet = false,
   onSave, 
   onCancel 
 }: ProblemEditorProps) {
@@ -50,6 +52,19 @@ export default function ProblemEditor({
         score: 1,
         explanation: ''
       })
+    } else if (isEditingSet && problemSet) {
+      // Edit existing problem set
+      setFormData({
+        setName: problemSet.name,
+        setDescription: problemSet.description || '',
+        question: '',
+        type: 'single_choice',
+        options: ['', '', '', ''],
+        correct_answer: '',
+        correct_answers: [],
+        score: 1,
+        explanation: ''
+      })
     } else if (problem) {
       // Edit existing problem
       setFormData({
@@ -67,7 +82,7 @@ export default function ProblemEditor({
       // Create new problem in existing set
       setFormData({
         setName: problemSet.name,
-        setDescription: problemSet.description,
+        setDescription: problemSet.description || '',
         question: '',
         type: 'single_choice',
         options: ['', '', '', ''],
@@ -77,7 +92,7 @@ export default function ProblemEditor({
         explanation: ''
       })
     }
-  }, [problem, problemSet, isCreatingSet])
+  }, [problem, problemSet, isCreatingSet, isEditingSet])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,20 +101,24 @@ export default function ProblemEditor({
     try {
       const endpoint = isCreatingSet 
         ? '/api/admin/problem-sets'
+        : isEditingSet && problemSet
+        ? `/api/admin/problem-sets/${problemSet.id}`
         : problem 
         ? `/api/admin/problems/${problem.id}`
         : '/api/admin/problems'
 
       const method = isCreatingSet 
         ? 'POST'
+        : isEditingSet
+        ? 'PUT'
         : problem 
         ? 'PUT'
         : 'POST'
 
       const payload = isCreatingSet ? {
-        name: formData.setName,
+        title: formData.setName,
         description: formData.setDescription,
-        problems: [{
+        problems: formData.question ? [{
           question: formData.question,
           type: formData.type,
           options: formData.type === 'single_choice' || formData.type === 'multiple_choice' ? formData.options.filter(opt => opt.trim()) : undefined,
@@ -107,7 +126,10 @@ export default function ProblemEditor({
           correct_answers: formData.type === 'multiple_choice' ? formData.correct_answers : undefined,
           score: formData.score,
           explanation: formData.explanation
-        }]
+        }] : []
+      } : isEditingSet ? {
+        title: formData.setName,
+        description: formData.setDescription
       } : {
         problemSetKey: problemSet?.id,
         question: formData.question,
@@ -185,7 +207,7 @@ export default function ProblemEditor({
     <div className="bg-white rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
-          {isCreatingSet ? '📚 새 문제 세트 만들기' : problem ? '✏️ 문제 수정' : '➕ 새 문제 만들기'}
+          {isCreatingSet ? '📚 새 문제 세트 만들기' : isEditingSet ? '✏️ 문제 세트 수정' : problem ? '✏️ 문제 수정' : '➕ 새 문제 만들기'}
         </h2>
         <div className="flex space-x-2">
           <button
@@ -277,8 +299,8 @@ export default function ProblemEditor({
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Problem Set Fields (only when creating new set) */}
-          {isCreatingSet && (
+          {/* Problem Set Fields (when creating new set or editing set) */}
+          {(isCreatingSet || isEditingSet) && (
             <div className="bg-blue-50 rounded-lg p-4 space-y-4">
               <h3 className="font-semibold text-blue-800">문제 세트 정보</h3>
               
@@ -310,9 +332,10 @@ export default function ProblemEditor({
             </div>
           )}
 
-          {/* Problem Fields */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">문제 정보</h3>
+          {/* Problem Fields (hidden when only editing problem set) */}
+          {!isEditingSet && (
+            <div className="space-y-4">
+              <h3 className="font-semibold text-gray-800">문제 정보</h3>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -474,7 +497,8 @@ export default function ProblemEditor({
                 placeholder="문제에 대한 해설을 입력하세요"
               />
             </div>
-          </div>
+            </div>
+          )}
 
           <div className="flex justify-end space-x-4">
             <button

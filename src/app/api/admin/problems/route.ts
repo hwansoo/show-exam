@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { problemSetKey, question, type, options, correct_answer, correct_answers, score, explanation } = body
 
-    if (!problemSetKey || !question || !type || !score) {
+    if (!problemSetKey || !question || !type || score === undefined) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 })
     }
 
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     const problemSetData = loadProblemSet(problemSet.file)
     
     // Generate new problem ID
-    const newId = Date.now().toString()
+    const newId = `${problemSetKey}_${Date.now()}`
     
     const newProblem = {
       id: newId,
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       options: (type === 'single_choice' || type === 'multiple_choice') ? options : undefined,
       correct_answer,
       correct_answers: type === 'multiple_choice' ? correct_answers : undefined,
-      score,
+      score: Number(score),
       explanation: explanation || undefined
     }
 
@@ -100,8 +100,8 @@ export async function POST(request: Request) {
       problem: newProblem,
       message: '문제가 성공적으로 생성되었습니다.'
     })
-  } catch {
-    console.error("API error occurred")
-    return NextResponse.json({ error: "Server error occurred" }, { status: 401 })
+  } catch (error) {
+    console.error('Error creating problem:', error)
+    return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }
