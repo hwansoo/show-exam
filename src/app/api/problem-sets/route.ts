@@ -13,16 +13,19 @@ export async function GET() {
     
     const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
     
-    const problemSets = indexData.map((item: { id: string; name: string; description: string; file: string }) => {
+    // Access the problem_sets array from the index data
+    const problemSetsList = indexData.problem_sets || []
+    
+    const problemSets = problemSetsList.map((item: { key: string; title: string; description: string; file: string }) => {
       const filePath = path.join(dataDir, item.file)
       if (fs.existsSync(filePath)) {
         const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
         return {
-          id: item.id,
-          name: data.name || item.name,
+          id: item.key,
+          name: data.title || item.title,
           description: data.description || item.description,
-          problems: data.problems,
-          totalScore: data.problems?.reduce((sum: number, p: { score?: number }) => sum + (p.score || 0), 0) || 0
+          problems: data.problems || data.questions,
+          totalScore: (data.problems || data.questions)?.reduce((sum: number, p: { score?: number }) => sum + (p.score || 0), 0) || 0
         }
       }
       return null
@@ -51,10 +54,9 @@ export async function POST(request: Request) {
     const filename = `${name.toLowerCase().replace(/\s+/g, '_')}_${id}.json`
     
     const newProblemSet = {
-      id,
-      name,
+      title: name,
       description,
-      problems,
+      questions: problems,
       createdAt: new Date().toISOString()
     }
     
@@ -63,20 +65,36 @@ export async function POST(request: Request) {
       JSON.stringify(newProblemSet, null, 2)
     )
     
-    let index = []
-    if (fs.existsSync(indexPath)) {
-      index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
+    interface ProblemSetIndex {
+      key: string;
+      file: string;
+      title: string;
+      description: string;
+      category: string;
+      difficulty: string;
+      created_at: string;
+      updated_at: string;
+      is_built_in: boolean;
     }
     
-    index.push({
-      id,
-      name,
-      description,
+    let indexData: { version: string; problem_sets: ProblemSetIndex[] } = { version: "1.0.0", problem_sets: [] }
+    if (fs.existsSync(indexPath)) {
+      indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
+    }
+    
+    indexData.problem_sets.push({
+      key: id,
       file: filename,
-      createdAt: new Date().toISOString()
+      title: name,
+      description,
+      category: "custom",
+      difficulty: "unknown",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      is_built_in: false
     })
     
-    fs.writeFileSync(indexPath, JSON.stringify(index, null, 2))
+    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2))
     
     return NextResponse.json({ success: true, id })
   } catch (error) {
