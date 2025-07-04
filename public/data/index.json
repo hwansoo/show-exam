@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "problem_sets": [
+    {
+      "key": "math_basic",
+      "file": "math_basic.json",
+      "title": "기초 수학",
+      "description": "기본적인 수학 개념을 다루는 문제들",
+      "category": "mathematics",
+      "difficulty": "beginner",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "is_built_in": true
+    },
+    {
+      "key": "physics_basic",
+      "file": "physics_basic.json",
+      "title": "기초 물리학",
+      "description": "물리학의 기본 개념과 공식들",
+      "category": "physics",
+      "difficulty": "beginner",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z",
+      "is_built_in": true
+    },
+    {
+      "key": "dip_1_2",
+      "file": "dip_1_2.json",
+      "title": "디지털 영상처리 1-2장 개념 이해 문제",
+      "description": "Lecture 1 (Introduction) 및 Lecture 2 (Image Fundamentals) 기반으로 구성된 디지털 영상처리 시험 대비 연습문제 30문제입니다.",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-03T11:11:38.464Z",
+      "updated_at": "2025-07-03T11:11:38.464Z",
+      "is_built_in": false
+    },
+    {
+      "key": "dip_l3",
+      "file": "dip_l3.json",
+      "title": "DIP - L3 Geometric Operations",
+      "description": "Lecture 3 Geometric Operations 기반 디지털 영상처리 연습문제 25문제, 배점 각 4점, 기출/모의고사 대비용 문제집입니다.",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-03T11:26:45.505Z",
+      "updated_at": "2025-07-03T11:26:45.505Z",
+      "is_built_in": false
+    },
+    {
+      "key": "dip_l5",
+      "file": "dip_l5.json",
+      "title": "DIP - L5 Human Visual System and Colors",
+      "description": "Lecture 5 (Human Visual System and Colors)를 기반으로 한 디지털 영상처리 연습문제 30문제, 각 문제 4점 배점, 중급-심화 시험 대비용 문제집입니다.",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T05:00:14.979Z",
+      "updated_at": "2025-07-04T05:00:14.979Z",
+      "is_built_in": false
+    },
+    {
+      "key": "test_api_1751625374164",
+      "file": "test_api_1751625374164.json",
+      "title": "Test Problem Set API",
+      "description": "A test problem set created via API",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T10:36:14.836Z",
+      "updated_at": "2025-07-04T10:36:14.836Z",
+      "is_built_in": false
+    },
+    {
+      "key": "debug_test_1751625377876",
+      "file": "debug_test_1751625377876.json",
+      "title": "Debug Test",
+      "description": "Debug test description",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T10:36:18.597Z",
+      "updated_at": "2025-07-04T10:36:18.597Z",
+      "is_built_in": false
+    }
+  ]
+}

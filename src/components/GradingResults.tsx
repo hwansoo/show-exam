@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { ProblemSet, Answer, Problem } from '@/types'
 import MathRenderer from './MathRenderer'
 
@@ -17,100 +18,144 @@ interface QuestionResult {
   score: number
   maxScore: number
   explanation?: string
+  reasoning?: string
+  strengths?: string
+  improvements?: string
+  gradedBy?: string
 }
 
 export default function GradingResults({ exam, answers, onGoBack, onRetakeExam }: GradingResultsProps) {
-  const gradeExam = (): { results: QuestionResult[], totalScore: number, maxTotalScore: number } => {
-    const results: QuestionResult[] = []
-    let totalScore = 0
-    let maxTotalScore = 0
+  const [results, setResults] = useState<QuestionResult[]>([])
+  const [totalScore, setTotalScore] = useState(0)
+  const [maxTotalScore, setMaxTotalScore] = useState(0)
+  const [isGrading, setIsGrading] = useState(true)
 
-    exam.problems.forEach(question => {
+  const gradeExam = useCallback(async () => {
+    const tempResults: QuestionResult[] = []
+    let tempTotalScore = 0
+    let tempMaxTotalScore = 0
+
+    for (const question of exam.problems) {
       const userAnswer = answers[question.id]
       let isCorrect = false
       let score = 0
       const maxScore = question.score
+      let reasoning = ''
+      let strengths = ''
+      let improvements = ''
+      let gradedBy = 'auto'
 
-      maxTotalScore += maxScore
+      tempMaxTotalScore += maxScore
 
       if (userAnswer) {
-        switch (question.type) {
-          case 'single_choice':
-            if (userAnswer.value === question.correct_answer?.toString()) {
-              isCorrect = true
-              score = maxScore
-            }
-            break
+        // Use LLM grading for short_answer and essay questions
+        if (question.type === 'short_answer' || question.type === 'essay') {
+          try {
+            const response = await fetch('/api/grade-essay', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                question: question.question,
+                answer: userAnswer.value,
+                correctAnswer: question.correct_answer?.toString() || '',
+                explanation: question.explanation || '',
+                maxScore,
+                type: question.type
+              })
+            })
 
-          case 'multiple_choice':
-            if (question.correct_answers) {
-              const userAnswers = userAnswer.value.split(',').map(Number).sort()
-              const correctAnswers = [...question.correct_answers].sort()
-              if (JSON.stringify(userAnswers) === JSON.stringify(correctAnswers)) {
+            const result = await response.json()
+            if (result.success) {
+              score = result.score
+              isCorrect = score >= maxScore * 0.7 // Consider 70%+ as correct
+              reasoning = result.reasoning || result.feedback
+              strengths = result.strengths || ''
+              improvements = result.improvements || ''
+              gradedBy = result.gradedBy || 'LLM'
+            }
+          } catch (error) {
+            console.error('LLM grading error:', error)
+            // Fall back to simple grading
+            if (question.type === 'short_answer') {
+              const userAnswerText = userAnswer.value.trim().toLowerCase()
+              const correctAnswerText = question.correct_answer?.toString().trim().toLowerCase()
+              if (userAnswerText === correctAnswerText) {
                 isCorrect = true
                 score = maxScore
               }
             }
-            break
+          }
+        } else {
+          // Use existing logic for other question types
+          switch (question.type) {
+            case 'single_choice':
+              if (userAnswer.value === question.correct_answer?.toString()) {
+                isCorrect = true
+                score = maxScore
+              }
+              break
 
-          case 'true_false':
-            if (userAnswer.value === question.correct_answer?.toString()) {
-              isCorrect = true
-              score = maxScore
-            }
-            break
+            case 'multiple_choice':
+              if (question.correct_answers) {
+                const userAnswers = userAnswer.value.split(',').map(Number).sort()
+                const correctAnswers = [...question.correct_answers].sort()
+                if (JSON.stringify(userAnswers) === JSON.stringify(correctAnswers)) {
+                  isCorrect = true
+                  score = maxScore
+                }
+              }
+              break
 
-          case 'short_answer':
-            // Simple string comparison (case-insensitive, trimmed)
-            const userAnswerText = userAnswer.value.trim().toLowerCase()
-            const correctAnswerText = question.correct_answer?.toString().trim().toLowerCase()
-            if (userAnswerText === correctAnswerText) {
-              isCorrect = true
-              score = maxScore
-            }
-            break
-
-          case 'essay':
-            // Simple essay grading based on length and content
-            const answerLength = userAnswer.value.trim().length
-            if (answerLength < 10) {
-              score = 0
-            } else if (answerLength < 50) {
-              score = Math.floor(maxScore * 0.3)
-            } else if (answerLength < 100) {
-              score = Math.floor(maxScore * 0.6)
-            } else if (answerLength < 200) {
-              score = Math.floor(maxScore * 0.8)
-              isCorrect = true
-            } else {
-              score = maxScore
-              isCorrect = true
-            }
-            
-            // Bonus for mathematical expressions
-            if (userAnswer.value.includes('$') || userAnswer.value.match(/[=+\-*/()]/)) {
-              score = Math.min(maxScore, score + Math.floor(maxScore * 0.1))
-            }
-            break
+            case 'true_false':
+              if (userAnswer.value === question.correct_answer?.toString()) {
+                isCorrect = true
+                score = maxScore
+              }
+              break
+          }
         }
       }
 
-      totalScore += score
+      tempTotalScore += score
 
-      results.push({
+      tempResults.push({
         question,
         userAnswer,
         isCorrect,
         score,
         maxScore,
-        explanation: question.explanation
+        explanation: question.explanation,
+        reasoning,
+        strengths,
+        improvements,
+        gradedBy
       })
-    })
+    }
 
-    return { results, totalScore, maxTotalScore }
+    setResults(tempResults)
+    setTotalScore(tempTotalScore)
+    setMaxTotalScore(tempMaxTotalScore)
+    setIsGrading(false)
+  }, [exam.problems, answers])
+
+  useEffect(() => {
+    gradeExam()
+  }, [gradeExam])
+
+  if (isGrading) {
+    return (
+      <div className="bg-white rounded-2xl p-8 shadow-2xl backdrop-blur-sm max-w-4xl mx-auto">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">답안 채점 중...</h2>
+          <p className="text-gray-600">AI가 귀하의 답안을 분석하고 있습니다.</p>
+        </div>
+      </div>
+    )
   }
 
-  const { results, totalScore, maxTotalScore } = gradeExam()
   const percentage = Math.round((totalScore / maxTotalScore) * 100)
 
   const getGrade = (percentage: number): { grade: string, color: string } => {
@@ -244,9 +289,67 @@ export default function GradingResults({ exam, answers, onGoBack, onRetakeExam }
               </div>
             </div>
 
+            {/* Score Explanation for Short Answer and Essay */}
+            {(result.question.type === 'short_answer' || result.question.type === 'essay') && (
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-sm font-semibold text-amber-800">📊 점수 설명:</p>
+                  <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
+                    {result.score}/{result.maxScore}점
+                  </span>
+                </div>
+                <p className="text-amber-700 text-sm font-medium">
+                  {result.score === result.maxScore 
+                    ? `완벽한 답변입니다! 만점 ${result.maxScore}점을 획득했습니다.`
+                    : result.score >= result.maxScore * 0.8
+                    ? `우수한 답변입니다! ${result.maxScore}점 만점 중 ${result.score}점을 획득했습니다.`
+                    : result.score >= result.maxScore * 0.6
+                    ? `적절한 답변입니다. ${result.maxScore}점 만점 중 ${result.score}점을 획득했습니다.`
+                    : result.score >= result.maxScore * 0.4
+                    ? `기본적인 답변입니다. ${result.maxScore}점 만점 중 ${result.score}점을 획득했습니다.`
+                    : `답변이 부족합니다. ${result.maxScore}점 만점 중 ${result.score}점을 획득했습니다.`}
+                </p>
+              </div>
+            )}
+
+            {/* LLM Reasoning and Feedback */}
+            {result.reasoning && (
+              <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded mb-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-sm font-semibold text-purple-800">🤖 AI 채점 분석:</p>
+                  {result.gradedBy === 'LLM' && (
+                    <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                      LLM 채점
+                    </span>
+                  )}
+                </div>
+                <p className="text-purple-700 text-sm mb-2">
+                  <MathRenderer text={result.reasoning} />
+                </p>
+                
+                {result.strengths && (
+                  <div className="mt-2">
+                    <p className="text-xs font-semibold text-green-800">✅ 잘한 점:</p>
+                    <p className="text-green-700 text-xs">
+                      <MathRenderer text={result.strengths} />
+                    </p>
+                  </div>
+                )}
+                
+                {result.improvements && (
+                  <div className="mt-2">
+                    <p className="text-xs font-semibold text-orange-800">💡 개선할 점:</p>
+                    <p className="text-orange-700 text-xs">
+                      <MathRenderer text={result.improvements} />
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {result.explanation && (
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-                <p className="text-sm font-semibold text-blue-800 mb-1">💡 해설:</p>
+                <p className="text-sm font-semibold text-blue-800 mb-1">📚 문제 해설:</p>
                 <p className="text-blue-700 text-sm">
                   <MathRenderer text={result.explanation} />
                 </p>
