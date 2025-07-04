@@ -55,6 +55,17 @@
       "created_at": "2025-07-04T05:00:14.979Z",
       "updated_at": "2025-07-04T05:00:14.979Z",
       "is_built_in": false
+    },
+    {
+      "key": "delete_test_1751625367063",
+      "file": "delete_test_1751625367063.json",
+      "title": "Delete Test Problem Set",
+      "description": "A problem set created specifically for deletion testing",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T10:36:07.736Z",
+      "updated_at": "2025-07-04T10:36:07.736Z",
+      "is_built_in": false
     }
   ]
 }
