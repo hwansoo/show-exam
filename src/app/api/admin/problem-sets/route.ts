@@ -37,13 +37,6 @@ function saveIndexData(data: any) { // eslint-disable-line @typescript-eslint/no
   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
 }
 
-// Load problem set data from file
-function loadProblemSetData(filename: string) {
-  const filePath = path.join(process.cwd(), 'data', filename)
-  const data = fs.readFileSync(filePath, 'utf8')
-  return JSON.parse(data)
-}
-
 // Save problem set data to file
 function saveProblemSetData(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
   const filePath = path.join(process.cwd(), 'data', filename)
@@ -98,7 +91,6 @@ export async function POST(request: Request) {
     }
     
     // Save problem set file
-    const problemSetPath = path.join(process.cwd(), 'data', filename)
     saveProblemSetData(filename, newProblemSetData)
     
     // Add to index
