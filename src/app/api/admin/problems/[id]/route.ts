@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import fs from 'fs'
-import path from 'path'
+// import fs from 'fs'
+// import path from 'path'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -24,20 +24,26 @@ function verifyAdminToken(request: Request) {
   }
 }
 
-// Load data from JSON file
-function loadData() {
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
-  const data = fs.readFileSync(dataPath, 'utf8')
-  return JSON.parse(data)
-}
+// Load data from JSON file (placeholder for future use)
+// function loadData() {
+//   const dataPath = path.join(process.cwd(), 'data', 'index.json')
+//   const data = fs.readFileSync(dataPath, 'utf8')
+//   return JSON.parse(data)
+// }
 
-// Save data to JSON file
-function saveData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
-}
+// Placeholder functions for future implementation
+// function loadProblemSet(filename: string) {
+//   const filePath = path.join(process.cwd(), 'data', filename)
+//   const data = fs.readFileSync(filePath, 'utf8')
+//   return JSON.parse(data)
+// }
 
-// PUT - Update problem
+// function saveProblemSet(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+//   const filePath = path.join(process.cwd(), 'data', filename)
+//   fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+// }
+
+// PUT - Update problem (placeholder implementation)
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -47,57 +53,12 @@ export async function PUT(
     
     const resolvedParams = await params
     const problemId = resolvedParams.id
-    const body = await request.json()
-    const { question, type, options, correct_answer, correct_answers, score, explanation } = body
 
-    if (!question || !type || !score) {
-      return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 })
-    }
-
-    const data = loadData()
-    
-    // Find the problem in any problem set
-    let foundProblemSetIndex = -1
-    let foundProblemIndex = -1
-    
-    for (let i = 0; i < data.problem_sets.length; i++) {
-      const problems = data.problem_sets[i].problems || []
-      const problemIndex = problems.findIndex((p: any) => p.id.toString() === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (problemIndex !== -1) {
-        foundProblemSetIndex = i
-        foundProblemIndex = problemIndex
-        break
-      }
-    }
-
-    if (foundProblemSetIndex === -1 || foundProblemIndex === -1) {
-      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
-    }
-
-    // Update the problem
-    const updatedProblem = {
-      id: problemId,
-      question,
-      type,
-      options: (type === 'single_choice' || type === 'multiple_choice') ? options : undefined,
-      correct_answer,
-      correct_answers: type === 'multiple_choice' ? correct_answers : undefined,
-      score,
-      explanation: explanation || undefined
-    }
-
-    data.problem_sets[foundProblemSetIndex].problems[foundProblemIndex] = updatedProblem
-
-    // Update total score
-    data.problem_sets[foundProblemSetIndex].totalScore = 
-      data.problem_sets[foundProblemSetIndex].problems.reduce((total: number, problem: any) => total + problem.score, 0) // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    saveData(data)
-
+    // Placeholder - editing functionality to be implemented
     return NextResponse.json({ 
-      success: true, 
-      problem: updatedProblem,
-      message: '문제가 성공적으로 수정되었습니다.'
+      success: false,
+      message: '문제 수정 기능은 곧 추가될 예정입니다.',
+      problemId
     })
   } catch {
     console.error("API error occurred")
@@ -105,7 +66,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete problem
+// DELETE - Delete problem (placeholder implementation)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -115,38 +76,12 @@ export async function DELETE(
     
     const resolvedParams = await params
     const problemId = resolvedParams.id
-    const data = loadData()
-    
-    // Find the problem in any problem set
-    let foundProblemSetIndex = -1
-    let foundProblemIndex = -1
-    
-    for (let i = 0; i < data.problem_sets.length; i++) {
-      const problems = data.problem_sets[i].problems || []
-      const problemIndex = problems.findIndex((p: any) => p.id.toString() === problemId) // eslint-disable-line @typescript-eslint/no-explicit-any
-      if (problemIndex !== -1) {
-        foundProblemSetIndex = i
-        foundProblemIndex = problemIndex
-        break
-      }
-    }
 
-    if (foundProblemSetIndex === -1 || foundProblemIndex === -1) {
-      return NextResponse.json({ error: '문제를 찾을 수 없습니다.' }, { status: 404 })
-    }
-
-    // Remove the problem
-    data.problem_sets[foundProblemSetIndex].problems.splice(foundProblemIndex, 1)
-
-    // Update total score
-    data.problem_sets[foundProblemSetIndex].totalScore = 
-      data.problem_sets[foundProblemSetIndex].problems.reduce((total: number, problem: any) => total + problem.score, 0) // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    saveData(data)
-
+    // Placeholder - deletion functionality to be implemented
     return NextResponse.json({ 
-      success: true,
-      message: '문제가 성공적으로 삭제되었습니다.'
+      success: false,
+      message: '문제 삭제 기능은 곧 추가될 예정입니다.',
+      problemId
     })
   } catch {
     console.error("API error occurred")

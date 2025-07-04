@@ -25,36 +25,28 @@ function verifyAdminToken(request: Request) {
 }
 
 // Load data from JSON file
-interface ProblemData {
-  problem_sets: Array<{
-    id: string
-    name: string
-    description: string
-    problems: Array<{
-      id: string
-      question: string
-      type: string
-      options?: string[]
-      correct_answer: string | number | boolean
-      correct_answers?: number[]
-      score: number
-      explanation?: string
-    }>
-    totalScore: number
-  }>
-}
-
-function loadData(): ProblemData {
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
+function loadData() {
+  const dataPath = path.join(process.cwd(), 'data', 'index.json')
   const data = fs.readFileSync(dataPath, 'utf8')
   return JSON.parse(data)
 }
 
-// Save data to JSON file
-function saveData(data: ProblemData) {
-  const dataPath = path.join(process.cwd(), 'public', 'data', 'index.json')
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
+function loadProblemSet(filename: string) {
+  const filePath = path.join(process.cwd(), 'data', filename)
+  const data = fs.readFileSync(filePath, 'utf8')
+  return JSON.parse(data)
 }
+
+function saveProblemSet(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const filePath = path.join(process.cwd(), 'data', filename)
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
+}
+
+// Save data to JSON file (placeholder for future use)
+// function saveData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+//   const dataPath = path.join(process.cwd(), 'data', 'index.json')
+//   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
+// }
 
 // POST - Create new problem
 export async function POST(request: Request) {
@@ -62,21 +54,24 @@ export async function POST(request: Request) {
     verifyAdminToken(request)
     
     const body = await request.json()
-    const { problemSetId, question, type, options, correct_answer, correct_answers, score, explanation } = body
+    const { problemSetKey, question, type, options, correct_answer, correct_answers, score, explanation } = body
 
-    if (!problemSetId || !question || !type || !score) {
+    if (!problemSetKey || !question || !type || !score) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 })
     }
 
-    const data = loadData()
+    const indexData = loadData()
     
     // Find the problem set
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const problemSetIndex = data.problem_sets.findIndex((set: any) => set.id === problemSetId)
-    if (problemSetIndex === -1) {
+    const problemSet = indexData.problem_sets.find((set: any) => set.key === problemSetKey)
+    if (!problemSet) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
+    // Load the actual problem set data
+    const problemSetData = loadProblemSet(problemSet.file)
+    
     // Generate new problem ID
     const newId = Date.now().toString()
     
@@ -92,16 +87,13 @@ export async function POST(request: Request) {
     }
 
     // Add problem to the set
-    if (!data.problem_sets[problemSetIndex].problems) {
-      data.problem_sets[problemSetIndex].problems = []
+    if (!problemSetData.problems) {
+      problemSetData.problems = []
     }
-    data.problem_sets[problemSetIndex].problems.push(newProblem)
+    problemSetData.problems.push(newProblem)
 
-    // Update total score
-    data.problem_sets[problemSetIndex].totalScore = 
-      data.problem_sets[problemSetIndex].problems.reduce((total: number, problem: any) => total + problem.score, 0) // eslint-disable-line @typescript-eslint/no-explicit-any
-
-    saveData(data)
+    // Save the updated problem set
+    saveProblemSet(problemSet.file, problemSetData)
 
     return NextResponse.json({ 
       success: true, 

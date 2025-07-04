@@ -19,7 +19,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const fetchExamSets = async () => {
     try {
-      const response = await fetch('/api/problem-sets')
+      const adminToken = localStorage.getItem('adminToken')
+      const response = await fetch('/api/admin/problem-sets-display', {
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      })
       const data = await response.json()
       setExamSets(data.problem_sets || [])
     } catch (error) {

@@ -21,70 +21,11 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
     setShowEditor(true)
   }
 
-  const handleEditProblem = (problem: Problem) => {
-    setEditingProblem(problem)
-    setShowEditor(true)
-  }
-
-  const handleCreateProblem = () => {
-    if (!selectedSet) return
-    setEditingProblem(null)
-    setShowEditor(true)
-  }
-
-  const handleDeleteProblem = async (problemId: string | number) => {
-    if (!selectedSet) return
-    
-    const confirmDelete = confirm('이 문제를 삭제하시겠습니까?')
-    if (!confirmDelete) return
-
-    try {
-      const response = await fetch(`/api/admin/problems/${problemId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      })
-
-      if (response.ok) {
-        onRefresh()
-        // Update selected set
-        const updatedProblems = selectedSet.problems?.filter(p => p.id !== problemId) || []
-        setSelectedSet({ ...selectedSet, problems: updatedProblems })
-      } else {
-        alert('문제 삭제에 실패했습니다.')
-      }
-    } catch (error) {
-      console.error('Error deleting problem:', error)
-      alert('문제 삭제 중 오류가 발생했습니다.')
-    }
-  }
-
-  const handleDeleteSet = async (setId: string | number) => {
-    const confirmDelete = confirm('이 문제 세트를 삭제하시겠습니까? 포함된 모든 문제가 삭제됩니다.')
-    if (!confirmDelete) return
-
-    try {
-      const response = await fetch(`/api/admin/problem-sets/${setId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      })
-
-      if (response.ok) {
-        onRefresh()
-        if (selectedSet?.id === setId) {
-          setSelectedSet(null)
-        }
-      } else {
-        alert('문제 세트 삭제에 실패했습니다.')
-      }
-    } catch (error) {
-      console.error('Error deleting problem set:', error)
-      alert('문제 세트 삭제 중 오류가 발생했습니다.')
-    }
-  }
+  // Placeholder functions for future implementation
+  // const handleEditProblem = (problem: Problem) => { ... }
+  // const handleCreateProblem = () => { ... }
+  // const handleDeleteProblem = async (problemId: string | number) => { ... }
+  // const handleDeleteSet = async (setId: string | number) => { ... }
 
   const handleEditorSave = () => {
     setShowEditor(false)
@@ -112,18 +53,31 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Problem Sets List */}
-      <div className="bg-white rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">📚 문제 세트</h2>
-          <button
-            onClick={handleCreateNewSet}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            + 새 문제 세트
-          </button>
+    <div className="space-y-6">
+      {/* Temporary Notice */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center space-x-2 mb-2">
+          <span className="text-blue-600">ℹ️</span>
+          <h3 className="font-semibold text-blue-800">문제 관리 기능</h3>
         </div>
+        <p className="text-blue-700 text-sm">
+          현재 기존 문제 세트를 조회할 수 있습니다. 문제 추가/수정/삭제 기능은 곧 추가될 예정입니다.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Problem Sets List */}
+        <div className="bg-white rounded-2xl p-6 shadow-2xl backdrop-blur-sm">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">📚 문제 세트</h2>
+            <button
+              onClick={() => alert('문제 세트 생성 기능은 곧 추가될 예정입니다.')}
+              className="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-not-allowed"
+              disabled
+            >
+              + 새 문제 세트 (준비 중)
+            </button>
+          </div>
 
         <div className="space-y-4">
           {examSets.map((set) => (
@@ -152,10 +106,11 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
-                    handleDeleteSet(set.id)
+                    alert('삭제 기능은 곧 추가될 예정입니다.')
                   }}
-                  className="text-red-500 hover:text-red-700 p-1"
-                  title="문제 세트 삭제"
+                  className="text-gray-400 p-1 cursor-not-allowed"
+                  title="문제 세트 삭제 (준비 중)"
+                  disabled
                 >
                   🗑️
                 </button>
@@ -185,10 +140,11 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
           </h2>
           {selectedSet && (
             <button
-              onClick={handleCreateProblem}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              onClick={() => alert('문제 추가 기능은 곧 추가될 예정입니다.')}
+              className="bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors cursor-not-allowed"
+              disabled
             >
-              + 새 문제
+              + 새 문제 (준비 중)
             </button>
           )}
         </div>
@@ -224,16 +180,18 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleEditProblem(problem)}
-                      className="text-blue-500 hover:text-blue-700 p-1"
-                      title="문제 수정"
+                      onClick={() => alert('문제 수정 기능은 곧 추가될 예정입니다.')}
+                      className="text-gray-400 p-1 cursor-not-allowed"
+                      title="문제 수정 (준비 중)"
+                      disabled
                     >
                       ✏️
                     </button>
                     <button
-                      onClick={() => handleDeleteProblem(problem.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
-                      title="문제 삭제"
+                      onClick={() => alert('문제 삭제 기능은 곧 추가될 예정입니다.')}
+                      className="text-gray-400 p-1 cursor-not-allowed"
+                      title="문제 삭제 (준비 중)"
+                      disabled
                     >
                       🗑️
                     </button>
@@ -246,10 +204,11 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
               <div className="text-center py-8">
                 <p className="text-gray-500 mb-4">이 문제 세트에는 문제가 없습니다.</p>
                 <button
-                  onClick={handleCreateProblem}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  onClick={() => alert('문제 추가 기능은 곧 추가될 예정입니다.')}
+                  className="bg-gray-400 text-white px-6 py-2 rounded-lg font-medium transition-colors cursor-not-allowed"
+                  disabled
                 >
-                  첫 번째 문제 만들기
+                  첫 번째 문제 만들기 (준비 중)
                 </button>
               </div>
             )}
@@ -262,6 +221,7 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }

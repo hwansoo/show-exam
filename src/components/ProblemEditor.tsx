@@ -109,7 +109,7 @@ export default function ProblemEditor({
           explanation: formData.explanation
         }]
       } : {
-        problemSetId: problemSet?.id,
+        problemSetKey: problemSet?.id,
         question: formData.question,
         type: formData.type,
         options: formData.type === 'single_choice' || formData.type === 'multiple_choice' ? formData.options.filter(opt => opt.trim()) : undefined,
