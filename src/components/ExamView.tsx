@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import QuestionCard from './QuestionCard'
+import GradingResults from './GradingResults'
 import { ProblemSet, Answer } from '@/types'
 
 interface ExamViewProps {
@@ -55,40 +56,25 @@ export default function ExamView({ exam, onGoBack }: ExamViewProps) {
   }
 
   const submitExam = async () => {
-    try {
-      const response = await fetch('/api/grade-essay', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          examId: exam.id,
-          answers
-        })
-      })
-      
-      const results = await response.json()
-      console.log('Grading results:', results)
-      setShowResults(true)
-    } catch (error) {
-      console.error('Error submitting exam:', error)
-    }
+    // For now, we'll do client-side grading
+    // Later this can be enhanced to include server-side AI grading for essays
+    setShowResults(true)
+  }
+
+  const retakeExam = () => {
+    setCurrentQuestionIndex(0)
+    setAnswers({})
+    setShowResults(false)
   }
 
   if (showResults) {
     return (
-      <div className="bg-white rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">시험 결과</h2>
-        <div className="text-center py-8">
-          <p className="text-lg text-gray-600 mb-6">시험이 제출되었습니다.</p>
-          <button
-            onClick={onGoBack}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
-          >
-            돌아가기
-          </button>
-        </div>
-      </div>
+      <GradingResults
+        exam={exam}
+        answers={answers}
+        onGoBack={onGoBack}
+        onRetakeExam={retakeExam}
+      />
     )
   }
 
