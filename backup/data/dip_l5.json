@@ -1,0 +1,314 @@
+{
+  "title": "DIP - L5 Human Visual System and Colors",
+  "description": "Lecture 5 (Human Visual System and Colors)를 기반으로 한 디지털 영상처리 연습문제 30문제, 각 문제 4점 배점, 중급-심화 시험 대비용 문제집입니다.",
+  "questions": [
+    {
+      "id": 1,
+      "type": "single_choice",
+      "question": "HSI 색상 모델에서 'H'는 무엇을 의미합니까?",
+      "options": [
+        "Hue",
+        "Highlight",
+        "Height",
+        "Heat"
+      ],
+      "correct_answer": 0,
+      "score": 4,
+      "explanation": "'H'는 Hue(색상)를 의미하며 색상의 주파수를 나타냅니다."
+    },
+    {
+      "id": 2,
+      "type": "single_choice",
+      "question": "다음 중 인간의 색 지각을 설명하는 요소가 아닌 것은 무엇입니까?",
+      "options": [
+        "Hue",
+        "Saturation",
+        "Intensity",
+        "Transparency"
+      ],
+      "correct_answer": 3,
+      "score": 4,
+      "explanation": "Transparency는 색 지각 요소가 아니며, 색 지각은 Hue, Saturation, Intensity로 설명됩니다."
+    },
+    {
+      "id": 3,
+      "type": "true_false",
+      "question": "CIE 1931 XYZ 색공간은 색의 표준 표현을 제공한다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "CIE 1931 XYZ 색공간은 색을 표준적으로 표현하기 위해 사용되는 국제 표준입니다."
+    },
+    {
+      "id": 4,
+      "type": "short_answer",
+      "question": "HSI 색 모델에서 'S'는 무엇을 의미합니까?",
+      "correct_answer": "Saturation",
+      "score": 4,
+      "explanation": "'Saturation'은 색의 선명함과 채도를 나타내는 요소입니다."
+    },
+    {
+      "id": 5,
+      "type": "short_answer",
+      "question": "HSI 색 모델에서 'I'는 무엇을 의미합니까?",
+      "correct_answer": "Intensity",
+      "score": 4,
+      "explanation": "'Intensity'는 색의 밝기, 명도를 의미합니다."
+    },
+    {
+      "id": 6,
+      "type": "single_choice",
+      "question": "다음 중 CIE XYZ 색 공간에서 z 성분은 어떻게 정의됩니까?",
+      "options": [
+        "z = x + y",
+        "z = 1 - x - y",
+        "z = y - x",
+        "z = x - y"
+      ],
+      "correct_answer": 1,
+      "score": 4,
+      "explanation": "CIE XYZ 색 공간에서는 z = 1 - x - y로 정의됩니다."
+    },
+    {
+      "id": 7,
+      "type": "true_false",
+      "question": "RGB 색상 모델은 가산 색상 모델이다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "RGB는 빛을 섞어 색을 표현하는 가산 색상 모델입니다."
+    },
+    {
+      "id": 8,
+      "type": "true_false",
+      "question": "CMY 색상 모델은 감산 색상 모델이다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "CMY는 인쇄 등에서 사용하는 감산 색상 모델입니다."
+    },
+    {
+      "id": 9,
+      "type": "short_answer",
+      "question": "빨강, 녹색, 파랑의 색을 합치면 어떤 색이 됩니까?",
+      "correct_answer": "흰색",
+      "score": 4,
+      "explanation": "RGB의 모든 색을 합치면 흰색(White)이 됩니다."
+    },
+    {
+      "id": 10,
+      "type": "short_answer",
+      "question": "CMY 색상 모델에서 Cyan은 어떤 RGB 색상의 조합으로 표현됩니까?",
+      "correct_answer": "Green + Blue",
+      "score": 4,
+      "explanation": "CMY에서 Cyan은 Green과 Blue의 결합으로 표현됩니다."
+    },
+    {
+      "id": 11,
+      "type": "single_choice",
+      "question": "HSI 색 모델에서 Hue는 무엇을 나타냅니까?",
+      "options": [
+        "색의 강도",
+        "색의 밝기",
+        "주 색상",
+        "투명도"
+      ],
+      "correct_answer": 2,
+      "score": 4,
+      "explanation": "Hue는 색상의 종류(주 색상, 색상환에서의 위치)를 나타냅니다."
+    },
+    {
+      "id": 12,
+      "type": "multiple_choice",
+      "question": "다음 중 HSI 모델의 구성 요소를 모두 고르세요.",
+      "options": [
+        "Hue",
+        "Saturation",
+        "Intensity",
+        "Transparency",
+        "Value"
+      ],
+      "correct_answers": [
+        0,
+        1,
+        2
+      ],
+      "score": 4,
+      "explanation": "HSI 모델의 구성 요소는 Hue, Saturation, Intensity입니다."
+    },
+    {
+      "id": 13,
+      "type": "true_false",
+      "question": "색도(Chromaticity)는 Hue와 Saturation으로 결정된다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "색도는 색상의 순수한 속성으로 Hue와 Saturation의 조합으로 표현됩니다."
+    },
+    {
+      "id": 14,
+      "type": "short_answer",
+      "question": "RGB 모델에서 G는 어떤 색을 의미합니까?",
+      "correct_answer": "Green",
+      "score": 4,
+      "explanation": "'G'는 Green(녹색)을 의미합니다."
+    },
+    {
+      "id": 15,
+      "type": "short_answer",
+      "question": "RGB 모델에서 B는 어떤 색을 의미합니까?",
+      "correct_answer": "Blue",
+      "score": 4,
+      "explanation": "'B'는 Blue(파랑)를 의미합니다."
+    },
+    {
+      "id": 16,
+      "type": "single_choice",
+      "question": "색의 밝기를 나타내는 요소는 무엇입니까?",
+      "options": [
+        "Hue",
+        "Saturation",
+        "Intensity",
+        "Chroma"
+      ],
+      "correct_answer": 2,
+      "score": 4,
+      "explanation": "Intensity는 색의 밝기(명도)를 나타냅니다."
+    },
+    {
+      "id": 17,
+      "type": "single_choice",
+      "question": "색의 선명도를 나타내는 요소는 무엇입니까?",
+      "options": [
+        "Hue",
+        "Saturation",
+        "Intensity",
+        "Brightness"
+      ],
+      "correct_answer": 1,
+      "score": 4,
+      "explanation": "Saturation은 색의 선명도, 채도를 나타냅니다."
+    },
+    {
+      "id": 18,
+      "type": "true_false",
+      "question": "Brightness는 Intensity와 동일한 개념이다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "Brightness와 Intensity는 실질적으로 유사하게 사용됩니다."
+    },
+    {
+      "id": 19,
+      "type": "short_answer",
+      "question": "CIE 색공간의 표준 이름을 적으세요.",
+      "correct_answer": "CIE 1931 XYZ",
+      "score": 4,
+      "explanation": "CIE 색공간은 CIE 1931 XYZ 색공간이 표준입니다."
+    },
+    {
+      "id": 20,
+      "type": "short_answer",
+      "question": "색상(Hue)을 한글로 표현하면 무엇입니까?",
+      "correct_answer": "색상",
+      "score": 4,
+      "explanation": "Hue는 '색상'으로 번역됩니다."
+    },
+    {
+      "id": 21,
+      "type": "single_choice",
+      "question": "다음 중 색상 표현에 있어 가산 혼합 방식이 사용되는 것은 무엇입니까?",
+      "options": [
+        "인쇄",
+        "디스플레이",
+        "염색",
+        "페인트"
+      ],
+      "correct_answer": 1,
+      "score": 4,
+      "explanation": "디스플레이는 RGB의 가산 혼합 방식을 사용합니다."
+    },
+    {
+      "id": 22,
+      "type": "multiple_choice",
+      "question": "다음 중 CIE 색공간의 특징을 모두 고르세요.",
+      "options": [
+        "표준 색상 표현",
+        "x, y, z 좌표 사용",
+        "모니터 교정",
+        "조명 색상 기준 제공"
+      ],
+      "correct_answers": [
+        0,
+        1,
+        3
+      ],
+      "score": 4,
+      "explanation": "CIE 색공간은 표준 색상 표현, x, y, z 좌표 사용, 조명 색상 기준 제공의 특징이 있습니다."
+    },
+    {
+      "id": 23,
+      "type": "true_false",
+      "question": "인간의 시각은 주관적인 색 경험을 포함한다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "인간의 시각은 주관적인 색 경험을 기반으로 하며, HSI 모델의 기초가 됩니다."
+    },
+    {
+      "id": 24,
+      "type": "short_answer",
+      "question": "인쇄에서 사용하는 색상 모델은 무엇입니까?",
+      "correct_answer": "CMY",
+      "score": 4,
+      "explanation": "인쇄에서는 CMY(또는 CMYK) 모델을 사용합니다."
+    },
+    {
+      "id": 25,
+      "type": "short_answer",
+      "question": "가산 혼합 방식에서 가장 밝은 색은 무엇입니까?",
+      "correct_answer": "흰색",
+      "score": 4,
+      "explanation": "가산 혼합 방식에서 모든 색이 합쳐지면 흰색이 됩니다."
+    },
+    {
+      "id": 26,
+      "type": "single_choice",
+      "question": "다음 중 색채 모델이 아닌 것은 무엇입니까?",
+      "options": [
+        "RGB",
+        "CMY",
+        "HSI",
+        "FFT"
+      ],
+      "correct_answer": 3,
+      "score": 4,
+      "explanation": "FFT는 색채 모델이 아니라 주파수 변환 방법입니다."
+    },
+    {
+      "id": 27,
+      "type": "true_false",
+      "question": "HSI 모델은 인간의 주관적 색 경험을 표현하기 위해 만들어졌다.",
+      "correct_answer": true,
+      "score": 4,
+      "explanation": "HSI 모델은 인간이 색을 인식하는 방식을 표현하기 위해 만들어졌습니다."
+    },
+    {
+      "id": 28,
+      "type": "short_answer",
+      "question": "Saturation을 한글로 표현하면 무엇입니까?",
+      "correct_answer": "채도",
+      "score": 4,
+      "explanation": "Saturation은 '채도'로 번역됩니다."
+    },
+    {
+      "id": 29,
+      "type": "short_answer",
+      "question": "Intensity를 한글로 표현하면 무엇입니까?",
+      "correct_answer": "명도",
+      "score": 4,
+      "explanation": "Intensity는 '명도'로 번역됩니다."
+    },
+    {
+      "id": 30,
+      "type": "essay",
+      "question": "HSI, RGB, CIE 색공간의 차이와 각각의 특징을 설명하세요.",
+      "score": 4,
+      "explanation": "모범답안: RGB는 가산 혼합 색상 모델, HSI는 인간의 주관적 색 인식을 기반, CIE는 표준 색 표현을 위한 국제 표준 색공간입니다."
+    }
+  ]
+}

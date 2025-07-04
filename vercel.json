@@ -1,17 +1,7 @@
 {
-  "functions": {
-    "api/*.js": {
-      "maxDuration": 10
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/exam/(.*)",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/problem/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": ".next"
 }

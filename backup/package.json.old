@@ -1,0 +1,38 @@
+{
+  "name": "show-exam",
+  "version": "1.0.0",
+  "description": "Interactive exam practice service with admin management",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:auth": "playwright test tests/auth-flow.spec.js",
+    "test:debug": "playwright test tests/auth-debug.spec.js --reporter=list",
+    "test:analysis": "playwright test tests/final-report.spec.js --reporter=list"
+  },
+  "keywords": [
+    "exam",
+    "practice",
+    "education",
+    "quiz",
+    "math",
+    "physics"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "dotenv": "^16.0.0",
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
