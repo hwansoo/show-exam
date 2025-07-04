@@ -55,6 +55,17 @@
       "created_at": "2025-07-04T05:00:14.979Z",
       "updated_at": "2025-07-04T05:00:14.979Z",
       "is_built_in": false
+    },
+    {
+      "key": "test_api_1751625374164",
+      "file": "test_api_1751625374164.json",
+      "title": "Test Problem Set API",
+      "description": "A test problem set created via API",
+      "category": "custom",
+      "difficulty": "unknown",
+      "created_at": "2025-07-04T10:36:14.836Z",
+      "updated_at": "2025-07-04T10:36:14.836Z",
+      "is_built_in": false
     }
   ]
 }
