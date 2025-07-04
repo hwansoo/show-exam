@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Problem, Answer } from '@/types'
+import MathRenderer from './MathRenderer'
 
 interface QuestionCardProps {
   question: Problem
@@ -10,7 +11,16 @@ interface QuestionCardProps {
 }
 
 export default function QuestionCard({ question, answer, onAnswer }: QuestionCardProps) {
-  const [textAnswer, setTextAnswer] = useState(answer?.value || '')
+  const [textAnswer, setTextAnswer] = useState('')
+
+  // Update textAnswer when answer prop changes
+  useEffect(() => {
+    if (answer?.type === 'text') {
+      setTextAnswer(answer.value || '')
+    } else {
+      setTextAnswer('')
+    }
+  }, [answer, question.id])
 
   const handleSingleChoice = (optionIndex: number) => {
     onAnswer({ type: 'multiple_choice', value: optionIndex.toString() })
@@ -42,10 +52,12 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
     <div className="bg-gray-50 rounded-xl p-6 border-l-4 border-blue-500">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">
-          {q.question}
+          <MathRenderer text={q.question} />
         </h3>
         {q.description && (
-          <p className="text-gray-600 mb-4">{q.description}</p>
+          <p className="text-gray-600 mb-4">
+            <MathRenderer text={q.description} />
+          </p>
         )}
       </div>
 
@@ -65,7 +77,7 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
                 onChange={() => handleSingleChoice(index)}
                 className="mr-3 text-blue-600"
               />
-              <span className="text-gray-800">{option}</span>
+              <span className="text-gray-800"><MathRenderer text={option} /></span>
             </label>
           ))}
         </div>
@@ -88,7 +100,7 @@ export default function QuestionCard({ question, answer, onAnswer }: QuestionCar
                   onChange={() => handleMultipleChoice(index)}
                   className="mr-3 text-blue-600"
                 />
-                <span className="text-gray-800">{option}</span>
+                <span className="text-gray-800"><MathRenderer text={option} /></span>
               </label>
             )
           })}

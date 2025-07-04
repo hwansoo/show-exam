@@ -28,8 +28,24 @@ export default function ExamView({ exam, onGoBack }: ExamViewProps) {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1)
     } else {
-      setShowResults(true)
+      // Check if all questions are answered
+      checkCompletionAndSubmit()
     }
+  }
+
+  const checkCompletionAndSubmit = () => {
+    const unansweredQuestions = questions.filter(q => !answers[q.id])
+    
+    if (unansweredQuestions.length > 0) {
+      const confirmSubmit = confirm(
+        `${unansweredQuestions.length}개의 문제가 답변되지 않았습니다. 그래도 제출하시겠습니까?`
+      )
+      if (!confirmSubmit) {
+        return
+      }
+    }
+    
+    submitExam()
   }
 
   const prevQuestion = () => {
@@ -126,7 +142,7 @@ export default function ExamView({ exam, onGoBack }: ExamViewProps) {
 
         {currentQuestionIndex === questions.length - 1 ? (
           <button
-            onClick={submitExam}
+            onClick={checkCompletionAndSubmit}
             className="px-6 py-3 rounded-lg font-semibold transition-colors
                      bg-green-600 hover:bg-green-700 text-white"
           >
@@ -140,6 +156,18 @@ export default function ExamView({ exam, onGoBack }: ExamViewProps) {
           >
             다음 문제
           </button>
+        )}
+      </div>
+
+      {/* Progress and completion indicator */}
+      <div className="mt-4 text-center">
+        <div className="text-sm text-gray-600">
+          답변 완료: {Object.keys(answers).length} / {questions.length} 문제
+        </div>
+        {Object.keys(answers).length === questions.length && (
+          <div className="text-green-600 font-semibold text-sm mt-1">
+            ✅ 모든 문제에 답변하셨습니다!
+          </div>
         )}
       </div>
     </div>

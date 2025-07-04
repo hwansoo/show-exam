@@ -1,4 +1,5 @@
 import { ProblemSet } from '@/types'
+import MathRenderer from './MathRenderer'
 
 interface ExamSelectorProps {
   examSets: ProblemSet[]
@@ -20,10 +21,10 @@ export default function ExamSelector({ examSets, onSelectExam }: ExamSelectorPro
                      hover:shadow-lg hover:-translate-y-1 group"
           >
             <h3 className="text-xl font-semibold text-gray-800 mb-3 group-hover:text-blue-600">
-              {examSet.name}
+              <MathRenderer text={examSet.name} />
             </h3>
             <p className="text-gray-600 text-sm mb-4">
-              {examSet.description}
+              <MathRenderer text={examSet.description} />
             </p>
             <div className="flex justify-between items-center">
               <span className="text-blue-600 font-medium">
