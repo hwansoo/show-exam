@@ -89,7 +89,7 @@ export async function POST(request: Request) {
           : null,
         correct_answer: JSON.stringify(
           problem.type === 'multiple_choice' 
-            ? problem.correct_answers 
+            ? (problem.correct_answers || problem.correct_answer)
             : problem.correct_answer
         ),
         score: problem.score || 1,
