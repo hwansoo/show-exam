@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import fs from 'fs'
-import path from 'path'
+import { supabaseAdmin } from '@/lib/supabase'
+import { v4 as uuidv4 } from 'uuid'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -24,30 +24,6 @@ function verifyAdminToken(request: Request) {
   }
 }
 
-// Load data from JSON file
-function loadData() {
-  const dataPath = path.join(process.cwd(), 'data', 'index.json')
-  const data = fs.readFileSync(dataPath, 'utf8')
-  return JSON.parse(data)
-}
-
-function loadProblemSet(filename: string) {
-  const filePath = path.join(process.cwd(), 'data', filename)
-  const data = fs.readFileSync(filePath, 'utf8')
-  return JSON.parse(data)
-}
-
-function saveProblemSet(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const filePath = path.join(process.cwd(), 'data', filename)
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-}
-
-// Save data to JSON file (placeholder for future use)
-// function saveData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-//   const dataPath = path.join(process.cwd(), 'data', 'index.json')
-//   fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
-// }
-
 // POST - Create new problem
 export async function POST(request: Request) {
   try {
@@ -60,48 +36,77 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '필수 필드가 누락되었습니다.' }, { status: 400 })
     }
 
-    const indexData = loadData()
-    
-    // Find the problem set
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const problemSet = indexData.problem_sets.find((set: any) => set.key === problemSetKey)
-    if (!problemSet) {
+    // Find the problem set by key
+    const { data: problemSet, error: setError } = await supabaseAdmin
+      .from('problem_sets')
+      .select('id')
+      .eq('key', problemSetKey)
+      .single()
+
+    if (setError || !problemSet) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    // Load the actual problem set data
-    const problemSetData = loadProblemSet(problemSet.file)
-    
-    // Generate new problem ID
-    const newId = `${problemSetKey}_${Date.now()}`
-    
+    // Get the current highest order_index for this problem set
+    const { data: lastProblem } = await supabaseAdmin
+      .from('problems')
+      .select('order_index')
+      .eq('problem_set_id', problemSet.id)
+      .order('order_index', { ascending: false })
+      .limit(1)
+
+    const nextOrderIndex = lastProblem && lastProblem.length > 0 ? lastProblem[0].order_index + 1 : 0
+
+    // Prepare the problem data
     const newProblem = {
-      id: newId,
+      id: uuidv4(),
+      problem_set_id: problemSet.id,
       question,
       type,
-      options: (type === 'single_choice' || type === 'multiple_choice') ? options : undefined,
-      correct_answer,
-      correct_answers: type === 'multiple_choice' ? correct_answers : undefined,
+      options: (type === 'single_choice' || type === 'multiple_choice') ? JSON.stringify(options) : null,
+      correct_answer: JSON.stringify(correct_answer),
       score: Number(score),
-      explanation: explanation || undefined
+      explanation: explanation || null,
+      order_index: nextOrderIndex
     }
 
-    // Add problem to the set
-    if (!problemSetData.problems) {
-      problemSetData.problems = []
-    }
-    problemSetData.problems.push(newProblem)
+    // Insert the new problem
+    const { data: createdProblem, error: insertError } = await supabaseAdmin
+      .from('problems')
+      .insert(newProblem)
+      .select()
+      .single()
 
-    // Save the updated problem set
-    saveProblemSet(problemSet.file, problemSetData)
+    if (insertError) {
+      console.error('Error creating problem:', insertError)
+      return NextResponse.json({ error: '문제 생성에 실패했습니다.' }, { status: 500 })
+    }
+
+    // Format the response to match the expected format
+    const formattedProblem = {
+      id: createdProblem.id,
+      question: createdProblem.question,
+      type: createdProblem.type,
+      options: createdProblem.options ? JSON.parse(createdProblem.options) : undefined,
+      correct_answer: JSON.parse(createdProblem.correct_answer),
+      correct_answers: type === 'multiple_choice' ? correct_answers : undefined,
+      score: createdProblem.score,
+      explanation: createdProblem.explanation
+    }
 
     return NextResponse.json({ 
       success: true, 
-      problem: newProblem,
+      problem: formattedProblem,
       message: '문제가 성공적으로 생성되었습니다.'
     })
   } catch (error) {
     console.error('Error creating problem:', error)
+    
+    // Check if it's an auth error
+    if (error instanceof Error && error.message.includes('token')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
     return NextResponse.json({ error: 'Server error occurred' }, { status: 500 })
   }
 }

@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import { testSupabaseConnection, isSupabaseConfigured } from '@/lib/supabase'
-import fs from 'fs'
-import path from 'path'
 
 export async function GET() {
   try {
@@ -13,28 +11,7 @@ export async function GET() {
         url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing',
         anonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'configured' : 'missing',
         serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'missing'
-      },
-      fileStorage: {
-        dataDirectoryExists: false,
-        indexFileExists: false,
-        problemSetCount: 0
       }
-    }
-
-    // Check file storage
-    try {
-      const dataDir = path.join(process.cwd(), 'data')
-      const indexPath = path.join(dataDir, 'index.json')
-      
-      status.fileStorage.dataDirectoryExists = fs.existsSync(dataDir)
-      status.fileStorage.indexFileExists = fs.existsSync(indexPath)
-      
-      if (status.fileStorage.indexFileExists) {
-        const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
-        status.fileStorage.problemSetCount = indexData.problem_sets?.length || 0
-      }
-    } catch (error) {
-      console.error('Error checking file storage:', error)
     }
 
     // Test Supabase connection
