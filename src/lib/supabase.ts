@@ -1,8 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+// Get environment variables with fallbacks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key'
+
+// Check if we have valid Supabase configuration
+const hasValidSupabaseConfig = supabaseUrl !== 'https://placeholder.supabase.co' && 
+                               supabaseAnonKey !== 'placeholder-key' &&
+                               supabaseUrl.includes('supabase.co')
 
 // Client-side Supabase client (public access)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -14,6 +20,34 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     persistSession: false
   }
 })
+
+// Utility functions
+export const isSupabaseConfigured = () => hasValidSupabaseConfig
+
+export async function testSupabaseConnection() {
+  if (!hasValidSupabaseConfig) {
+    return { connected: false, error: 'Supabase not configured' }
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('problem_sets')
+      .select('id')
+      .limit(1)
+    
+    if (error && error.message.includes('relation "problem_sets" does not exist')) {
+      return { connected: false, error: 'Database tables not created' }
+    }
+    
+    if (error) {
+      return { connected: false, error: error.message }
+    }
+    
+    return { connected: true, hasData: data && data.length > 0 }
+  } catch (error) {
+    return { connected: false, error: String(error) }
+  }
+}
 
 // Database types
 export interface Database {
