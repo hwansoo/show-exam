@@ -1,6 +1,6 @@
 /**
- * Generate SQL INSERT statements from JSON data
- * Run with: node generate-data-sql.js > data-inserts.sql
+ * Generate clean SQL with proper PostgreSQL JSON syntax
+ * Run with: node generate-clean-sql.js > clean-data-inserts.sql
  */
 
 const fs = require('fs');
@@ -9,21 +9,16 @@ const { v4: uuidv4 } = require('uuid');
 
 function escapeString(str) {
   if (!str) return 'NULL';
-  return "'" + str.replace(/'/g, "''").replace(/\\/g, '\\\\') + "'";
+  return "$STR$" + str + "$STR$";
 }
 
-function escapeJson(obj) {
+function formatJson(obj) {
   if (!obj) return 'NULL';
-  if (typeof obj === 'string') {
-    // If it's already a string, treat it as a JSON string value
-    return "'" + obj.replace(/'/g, "''") + "'";
-  }
-  // If it's an object/array, stringify it properly
-  return "'" + JSON.stringify(obj).replace(/'/g, "''") + "'";
+  return "$JSON$" + JSON.stringify(obj) + "$JSON$::jsonb";
 }
 
-function generateDataSQL() {
-  console.log('-- Data migration SQL - Generated from JSON files');
+function generateCleanSQL() {
+  console.log('-- Clean Data migration SQL with proper JSON handling');
   console.log('-- Run this AFTER running manual-migration.sql');
   console.log('');
   
@@ -101,7 +96,7 @@ function generateDataSQL() {
           const problem = problems[i];
           const problemId = uuidv4();
           
-          const options = problem.options ? problem.options : null;
+          const options = problem.options || null;
           const correctAnswer = problem.type === 'multiple_choice' 
             ? problem.correct_answers || null
             : problem.correct_answer;
@@ -111,8 +106,8 @@ function generateDataSQL() {
           console.log(`  '${problemSetId}',`);
           console.log(`  ${escapeString(problem.question)},`);
           console.log(`  ${escapeString(problem.type)},`);
-          console.log(`  ${escapeJson(options)},`);
-          console.log(`  ${escapeJson(correctAnswer)},`);
+          console.log(`  ${formatJson(options)},`);
+          console.log(`  ${formatJson(correctAnswer)},`);
           console.log(`  ${problem.score || 1},`);
           console.log(`  ${escapeString(problem.explanation || '')},`);
           console.log(`  ${i}`);
@@ -125,7 +120,7 @@ function generateDataSQL() {
     }
     
     console.log('-- Migration completed');
-    console.log(`SELECT 'Data migration completed' as status;`);
+    console.log(`SELECT 'Data migration completed successfully' as status;`);
     
   } catch (error) {
     console.error('Error generating SQL:', error);
@@ -134,4 +129,4 @@ function generateDataSQL() {
 }
 
 // Run the generator
-generateDataSQL();
+generateCleanSQL();
