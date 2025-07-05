@@ -92,6 +92,34 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
     setJsonContent('')
   }
 
+  const handleDeleteSet = async (setId: string | number) => {
+    if (!confirm('정말로 이 문제 세트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+      return
+    }
+
+    try {
+      const adminToken = localStorage.getItem('adminToken')
+      const response = await fetch(`/api/admin/problem-sets/${setId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${adminToken}`
+        }
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        alert(result.message)
+        setSelectedSet(null)
+        onRefresh()
+      } else {
+        alert(result.error || '문제 세트 삭제에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('Error deleting problem set:', error)
+      alert('문제 세트 삭제 중 오류가 발생했습니다.')
+    }
+  }
+
   if (showJsonEditor) {
     return (
       <div className="bg-white rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
@@ -199,6 +227,16 @@ export default function ProblemManager({ examSets, onRefresh }: ProblemManagerPr
                     title="문제 세트 수정"
                   >
                     ✏️
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteSet(set.id)
+                    }}
+                    className="text-red-500 hover:text-red-700 p-1 transition-colors"
+                    title="문제 세트 삭제"
+                  >
+                    🗑️
                   </button>
                 </div>
               </div>
