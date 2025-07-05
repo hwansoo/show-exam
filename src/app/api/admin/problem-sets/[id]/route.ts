@@ -35,7 +35,10 @@ export async function PUT(
     const resolvedParams = await params
     const setKey = resolvedParams.id
     const body = await request.json()
-    const { title, description, problems = [] } = body
+    const { title, description, problems = [], questions = [] } = body
+    
+    // Support both 'problems' and 'questions' field names for flexibility
+    const problemsList = problems.length > 0 ? problems : questions
 
     if (!title) {
       return NextResponse.json({ error: '제목은 필수 입력 항목입니다.' }, { status: 400 })
@@ -80,8 +83,8 @@ export async function PUT(
     // Insert new problems
     const processedProblems = []
     
-    for (let index = 0; index < problems.length; index++) {
-      const problem = problems[index]
+    for (let index = 0; index < problemsList.length; index++) {
+      const problem = problemsList[index]
       
       const problemData = {
         problem_set_id: problemSet.id,
