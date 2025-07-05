@@ -1,104 +1,70 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { supabase } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    const dataDir = path.join(process.cwd(), 'data')
-    const indexPath = path.join(dataDir, 'index.json')
+    // Fetch problem sets with their problems from Supabase
+    const { data: problemSets, error: setsError } = await supabase
+      .from('problem_sets')
+      .select(`
+        id,
+        key,
+        title,
+        description,
+        category,
+        difficulty,
+        is_built_in,
+        created_at,
+        updated_at,
+        problems (
+          id,
+          question,
+          type,
+          options,
+          correct_answer,
+          score,
+          explanation,
+          order_index
+        )
+      `)
+      .order('created_at', { ascending: true })
     
-    if (!fs.existsSync(indexPath)) {
-      return NextResponse.json({ error: 'Index file not found' }, { status: 404 })
+    if (setsError) {
+      console.error('Error fetching problem sets:', setsError)
+      return NextResponse.json({ error: 'Failed to fetch problem sets' }, { status: 500 })
     }
     
-    const indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
+    // Transform data to match the expected format
+    const formattedProblemSets = problemSets?.map((set) => ({
+      id: set.key, // Use key as ID for compatibility
+      name: set.title,
+      description: set.description || '',
+      problems: set.problems
+        ?.sort((a, b) => a.order_index - b.order_index)
+        ?.map((problem) => ({
+          id: problem.id,
+          question: problem.question,
+          type: problem.type,
+          options: problem.options ? JSON.parse(problem.options) : undefined,
+          correct_answer: problem.correct_answer ? JSON.parse(problem.correct_answer) : undefined,
+          score: problem.score,
+          explanation: problem.explanation
+        })) || [],
+      totalScore: set.problems?.reduce((sum, p) => sum + (p.score || 0), 0) || 0
+    })) || []
     
-    // Access the problem_sets array from the index data
-    const problemSetsList = indexData.problem_sets || []
-    
-    const problemSets = problemSetsList.map((item: { key: string; title: string; description: string; file: string }) => {
-      const filePath = path.join(dataDir, item.file)
-      if (fs.existsSync(filePath)) {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'))
-        return {
-          id: item.key,
-          name: data.title || item.title,
-          description: data.description || item.description,
-          problems: data.problems || data.questions,
-          totalScore: (data.problems || data.questions)?.reduce((sum: number, p: { score?: number }) => sum + (p.score || 0), 0) || 0
-        }
-      }
-      return null
-    }).filter(Boolean)
-    
-    return NextResponse.json(problemSets)
+    return NextResponse.json(formattedProblemSets)
   } catch (error) {
     console.error('Error loading problem sets:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const body = await request.json()
-    const { name, description, problems } = body
-    
-    if (!name || !problems) {
-      return NextResponse.json({ error: 'Name and problems are required' }, { status: 400 })
-    }
-    
-    const dataDir = path.join(process.cwd(), 'data')
-    const indexPath = path.join(dataDir, 'index.json')
-    
-    const id = Date.now().toString()
-    const filename = `${name.toLowerCase().replace(/\s+/g, '_')}_${id}.json`
-    
-    const newProblemSet = {
-      title: name,
-      description,
-      questions: problems,
-      createdAt: new Date().toISOString()
-    }
-    
-    fs.writeFileSync(
-      path.join(dataDir, filename),
-      JSON.stringify(newProblemSet, null, 2)
-    )
-    
-    interface ProblemSetIndex {
-      key: string;
-      file: string;
-      title: string;
-      description: string;
-      category: string;
-      difficulty: string;
-      created_at: string;
-      updated_at: string;
-      is_built_in: boolean;
-    }
-    
-    let indexData: { version: string; problem_sets: ProblemSetIndex[] } = { version: "1.0.0", problem_sets: [] }
-    if (fs.existsSync(indexPath)) {
-      indexData = JSON.parse(fs.readFileSync(indexPath, 'utf-8'))
-    }
-    
-    indexData.problem_sets.push({
-      key: id,
-      file: filename,
-      title: name,
-      description,
-      category: "custom",
-      difficulty: "unknown",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      is_built_in: false
-    })
-    
-    fs.writeFileSync(indexPath, JSON.stringify(indexData, null, 2))
-    
-    return NextResponse.json({ success: true, id })
+    return NextResponse.json({ error: 'Use admin API for creating problem sets' }, { status: 403 })
   } catch (error) {
-    console.error('Error creating problem set:', error)
+    console.error('Error in POST /api/problem-sets:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

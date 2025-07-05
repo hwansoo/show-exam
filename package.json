@@ -9,18 +9,23 @@
     "lint": "next lint",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "migrate": "npx ts-node --project scripts/tsconfig.json scripts/run-migration.ts",
+    "setup-db": "npx ts-node --project scripts/tsconfig.json scripts/setup-database.ts",
+    "migrate-data": "npx ts-node --project scripts/tsconfig.json scripts/migrate-data.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/uuid": "^10.0.0",
     "@vercel/speed-insights": "^1.2.0",
     "jsonwebtoken": "^9.0.2",
     "katex": "^0.16.22",
     "next": "15.3.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-katex": "^3.1.0"
+    "react-katex": "^3.1.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -33,6 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

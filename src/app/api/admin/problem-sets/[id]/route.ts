@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import fs from 'fs'
-import path from 'path'
+import { supabaseAdmin } from '@/lib/supabase'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
@@ -24,31 +23,6 @@ function verifyAdminToken(request: Request) {
   }
 }
 
-// Load data from JSON file
-function loadIndexData() {
-  const dataPath = path.join(process.cwd(), 'data', 'index.json')
-  const data = fs.readFileSync(dataPath, 'utf8')
-  return JSON.parse(data)
-}
-
-// Save data to JSON file
-function saveIndexData(data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const dataPath = path.join(process.cwd(), 'data', 'index.json')
-  fs.writeFileSync(dataPath, JSON.stringify(data, null, 2))
-}
-
-// Load problem set data from file
-function loadProblemSetData(filename: string) {
-  const filePath = path.join(process.cwd(), 'data', filename)
-  const data = fs.readFileSync(filePath, 'utf8')
-  return JSON.parse(data)
-}
-
-// Save problem set data to file
-function saveProblemSetData(filename: string, data: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const filePath = path.join(process.cwd(), 'data', filename)
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-}
 
 // PUT - Update problem set
 export async function PUT(
@@ -59,47 +33,100 @@ export async function PUT(
     verifyAdminToken(request)
     
     const resolvedParams = await params
-    const setId = resolvedParams.id
+    const setKey = resolvedParams.id
     const body = await request.json()
-    const { title, description } = body
+    const { title, description, problems = [] } = body
 
-    if (!title || !description) {
-      return NextResponse.json({ error: '제목과 설명은 필수 입력 항목입니다.' }, { status: 400 })
+    if (!title) {
+      return NextResponse.json({ error: '제목은 필수 입력 항목입니다.' }, { status: 400 })
     }
 
-    const indexData = loadIndexData()
-    
-    // Find the problem set
-    const setIndex = indexData.problem_sets.findIndex((set: any) => set.key === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (setIndex === -1) {
+    // Find the problem set by key
+    const { data: problemSet, error: findError } = await supabaseAdmin
+      .from('problem_sets')
+      .select('id, key, title, description')
+      .eq('key', setKey)
+      .single()
+
+    if (findError || !problemSet) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    const problemSetIndex = indexData.problem_sets[setIndex]
-    
-    // Load the problem set data
-    const problemSetData = loadProblemSetData(problemSetIndex.file)
-    
-    // Update the problem set data
-    problemSetData.title = title
-    problemSetData.description = description
-    
-    // Update the index entry
-    indexData.problem_sets[setIndex].title = title
-    indexData.problem_sets[setIndex].description = description
+    // Update the problem set
+    const { error: updateError } = await supabaseAdmin
+      .from('problem_sets')
+      .update({
+        title,
+        description: description || ''
+      })
+      .eq('id', problemSet.id)
 
-    // Save both files
-    saveProblemSetData(problemSetIndex.file, problemSetData)
-    saveIndexData(indexData)
+    if (updateError) {
+      console.error('Error updating problem set:', updateError)
+      return NextResponse.json({ error: 'Failed to update problem set' }, { status: 500 })
+    }
+
+    // Delete existing problems for this set
+    const { error: deleteProblemsError } = await supabaseAdmin
+      .from('problems')
+      .delete()
+      .eq('problem_set_id', problemSet.id)
+
+    if (deleteProblemsError) {
+      console.error('Error deleting existing problems:', deleteProblemsError)
+      // Continue anyway - we'll try to add new problems
+    }
+
+    // Insert new problems
+    const processedProblems = []
+    
+    for (let index = 0; index < problems.length; index++) {
+      const problem = problems[index]
+      
+      const problemData = {
+        problem_set_id: problemSet.id,
+        question: problem.question,
+        type: problem.type,
+        options: (problem.type === 'single_choice' || problem.type === 'multiple_choice') 
+          ? JSON.stringify(problem.options) 
+          : null,
+        correct_answer: JSON.stringify(
+          problem.type === 'multiple_choice' 
+            ? problem.correct_answers 
+            : problem.correct_answer
+        ),
+        score: problem.score || 1,
+        explanation: problem.explanation || null,
+        order_index: index
+      }
+
+      const { data: insertedProblem, error: problemError } = await supabaseAdmin
+        .from('problems')
+        .insert(problemData)
+        .select()
+        .single()
+
+      if (!problemError && insertedProblem) {
+        processedProblems.push({
+          id: insertedProblem.id,
+          question: insertedProblem.question,
+          type: insertedProblem.type,
+          options: insertedProblem.options ? JSON.parse(insertedProblem.options) : undefined,
+          correct_answer: insertedProblem.correct_answer ? JSON.parse(insertedProblem.correct_answer) : undefined,
+          score: insertedProblem.score,
+          explanation: insertedProblem.explanation
+        })
+      }
+    }
 
     return NextResponse.json({ 
       success: true, 
       problemSet: {
-        id: setId,
+        id: setKey,
         name: title,
-        description,
-        problems: problemSetData.problems || [],
-        totalScore: (problemSetData.problems || []).reduce((total: number, problem: any) => total + (problem.score || 0), 0) // eslint-disable-line @typescript-eslint/no-explicit-any
+        description: description || '',
+        problems: processedProblems,
+        totalScore: processedProblems.reduce((total, problem) => total + (problem.score || 0), 0)
       },
       message: '문제 세트가 성공적으로 수정되었습니다.'
     })
@@ -118,30 +145,33 @@ export async function DELETE(
     verifyAdminToken(request)
     
     const resolvedParams = await params
-    const setId = resolvedParams.id
-    const indexData = loadIndexData()
+    const setKey = resolvedParams.id
     
-    // Find the problem set
-    const setIndex = indexData.problem_sets.findIndex((set: any) => set.key === setId) // eslint-disable-line @typescript-eslint/no-explicit-any
-    if (setIndex === -1) {
+    // Find the problem set by key
+    const { data: problemSet, error: findError } = await supabaseAdmin
+      .from('problem_sets')
+      .select('id, title')
+      .eq('key', setKey)
+      .single()
+
+    if (findError || !problemSet) {
       return NextResponse.json({ error: '문제 세트를 찾을 수 없습니다.' }, { status: 404 })
     }
 
-    const problemSetIndex = indexData.problem_sets[setIndex]
-    
-    // Delete the problem set file
-    const filePath = path.join(process.cwd(), 'data', problemSetIndex.file)
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath)
-    }
+    // Delete the problem set (this will cascade delete all associated problems)
+    const { error: deleteError } = await supabaseAdmin
+      .from('problem_sets')
+      .delete()
+      .eq('id', problemSet.id)
 
-    // Remove from index
-    indexData.problem_sets.splice(setIndex, 1)
-    saveIndexData(indexData)
+    if (deleteError) {
+      console.error('Error deleting problem set:', deleteError)
+      return NextResponse.json({ error: 'Failed to delete problem set' }, { status: 500 })
+    }
 
     return NextResponse.json({ 
       success: true,
-      message: '문제 세트가 성공적으로 삭제되었습니다.'
+      message: `문제 세트 "${problemSet.title}"이(가) 성공적으로 삭제되었습니다.`
     })
   } catch (error) {
     console.error('Error deleting problem set:', error)
